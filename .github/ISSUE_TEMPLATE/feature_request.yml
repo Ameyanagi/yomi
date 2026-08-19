@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a focused capability or API change.
+title: "enhancement: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What concrete use case is blocked?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed contract
+      description: Describe semantics, dependencies, edge cases, and alternatives.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This fits the documented roadmap and Not planned boundary.
+          required: true

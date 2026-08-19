@@ -1,0 +1,18 @@
+# Pixi environments and build artifacts
+.pixi/
+output/
+*.mojoc
+*.mojopkg
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+
+# Local AI agent tooling and instructions
+/AGENTS.md
+/CLAUDE.md
+/.agents/
+/.claude/
+/.codex/
+/skills-lock.json
