@@ -8,7 +8,10 @@ CJK phonetic representations and readings for Mojo.
 
 Yomi produces CJK phonetic representations while preserving exact mappings to original source ranges.
 
-The first implementation milestone is intentionally narrow: implement Hangul decomposition, choseong search, keyboard forms, and kana romanization with exact source byte ranges.
+The first implementation milestone is intentionally narrow: implement Hangul
+decomposition, choseong search, keyboard forms, kana romanization, and the
+licensed pinyin/initials data required by Yuragi's `bjdx` v0.1 proof, all with
+exact source byte ranges.
 The project is independently installable and does not require any application
 from the wider ecosystem.
 
@@ -34,8 +37,37 @@ The Mojo import is `yomi`. The eventual Conda distribution is
 `mojo-yomi`. Source lives under `src/yomi/`, whose
 `__init__.mojo` defines the package boundary.
 
-The current scaffold includes only an internal smoke marker. Nothing is
-re-exported as a stable public API yet.
+## First public slice
+
+`hangul_choseong` gives NFC and canonically decomposed modern Hangul compatible
+choseong views and passes other grapheme clusters through unchanged:
+
+```mojo
+from yomi import hangul_choseong
+
+
+def main() raises:
+    var representation = hangul_choseong("한국 notes")
+    print(representation.text())  # ㅎㄱ notes
+
+    var mappings = representation.mapping_snapshot()
+    var first = mappings[0].copy()
+    print(first.output_start(), first.output_end())
+    print(first.source_start(), first.source_end())
+
+    var source_ranges = representation.source_ranges_for_output(0, 6)
+    print(source_ranges[0].start(), source_ranges[0].end())
+```
+
+Every mapping is an ordered pair of half-open UTF-8 byte ranges. Output ranges
+refer to the transformed text; source ranges refer to the original input. The
+representation owns copies of both texts and validates mapping bounds and UTF-8
+boundaries against them. Accessors are fallible because Mojo 1.0 does not
+enforce field privacy; every public read rejects invalid reachable mutation.
+`mapping_snapshot()` validates once for efficient enumeration.
+`source_ranges_for_output()` projects a match to ordered exact source ranges,
+merging only overlapping or touching ranges and never bridging a source gap.
+The API is experimental and may change before v0.1.
 
 ## Repository map
 
@@ -47,7 +79,9 @@ re-exported as a stable public API yet.
 - `conda.recipe/`: local Rattler build recipe
 
 See [the architecture](docs/architecture.md), [design principles](docs/design.md),
-and [roadmap](docs/roadmap.md) before proposing a new dependency or feature.
+[roadmap](docs/roadmap.md), and
+[executable implementation plan](docs/implementation-plan.md) before proposing
+a new dependency or feature.
 
 ## License
 

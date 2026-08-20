@@ -30,9 +30,31 @@ jobs:
           cache: true
       - run: pixi run --locked check
 
+  package:
+    name: Package ${{ matrix.name }}
+    needs: check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86-64
+            os: ubuntu-24.04
+          - name: Linux ARM64
+            os: ubuntu-24.04-arm
+          - name: macOS ARM64
+            os: macos-14
+    steps:
+      - uses: actions/checkout@v7
+      - uses: prefix-dev/setup-pixi@v0.10.1
+        with:
+          pixi-version: v0.76.2
+          cache: true
+      - run: pixi run --locked package
+
   publish:
     name: Publish source release
-    needs: check
+    needs: package
     runs-on: ubuntu-24.04
     permissions:
       contents: write
