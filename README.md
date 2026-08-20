@@ -81,6 +81,29 @@ scalar, so NFC and NFD inputs produce identical transformed text. Combining or
 extender code points after a precomposed syllable retain their own exact source
 ranges.
 
+`compose_hangul` contracts modern conjoining Jamo, or a precomposed LV syllable
+plus a trailing Jamo, to one modern Hangul syllable. The single mapping spans
+all source scalars consumed by the contraction:
+
+```mojo
+from yomi import compose_hangul
+
+
+def main() raises:
+    var representation = compose_hangul("각")
+    print(representation.text())  # 각
+
+    var mapping = representation.mapping(0)
+    print(mapping.output_start(), mapping.output_end())  # 0 3
+    print(mapping.source_start(), mapping.source_end())  # 0 9
+```
+
+The non-raising `is_hiragana`, `is_katakana`, `is_kana`, `is_kanji`, and
+`is_hangul_syllable` functions are allocation-free, per-scalar routing
+predicates for deciding whether to attempt a phonetic representation. They
+require every scalar to belong to the documented script set and return `False`
+for empty input.
+
 Every mapping is an ordered pair of half-open UTF-8 byte ranges. Output ranges
 refer to the transformed text; source ranges refer to the original input. The
 representation owns copies of both texts and validates mapping bounds and UTF-8

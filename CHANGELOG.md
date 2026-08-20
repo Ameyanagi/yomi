@@ -19,5 +19,9 @@ and uses semantic versioning after the first public release.
   without bridging discontiguous highlights.
 - Add algorithmic canonical decomposition for all 11,172 modern Hangul
   syllables with exact expansion mappings and NFC/NFD-equivalent output.
+- Add canonical Hangul composition with exact many-source-to-one-syllable
+  mappings and an exhaustive 11,172-syllable round-trip oracle.
+- Add allocation-free Hiragana, Katakana, Kana, base-block Kanji, and modern
+  precomposed Hangul routing predicates.
 - Gate source releases on full installed-package verification across the
   supported platform matrix.

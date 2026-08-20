@@ -11,8 +11,10 @@ representation contract
     -> Japanese dictionary readings (later)
 ```
 
-A later phase may be designed while an earlier phase is underway, but its
-runtime implementation does not begin until the preceding exit gate passes.
+A later phase may be designed while an earlier phase is underway. The
+ecosystem-wave adjudication explicitly starts J0 kana work while K1's
+Dubeolsik representation remains open; other runtime phases still wait for the
+preceding exit gate.
 
 ## Definition of done for every slice
 
@@ -82,13 +84,16 @@ prints the exact byte mappings; the full locked check passes.
 
 ## K1 — Complete Korean v0.1
 
-Status: in progress. Algorithmic decomposition and its exhaustive invariant
-gate are implemented; the Dubeolsik representation remains open.
+Status: in progress. Algorithmic decomposition, canonical composition, and the
+exhaustive round-trip oracle are implemented; the Dubeolsik representation
+remains open.
 
 Deliverables:
 
 - algorithmic Hangul syllable decomposition into canonical leading, vowel,
   and optional trailing Jamo (implemented);
+- canonical `compose_hangul` contraction for modern conjoining Jamo and
+  precomposed LV syllables followed by trailing Jamo (implemented);
 - choseong recognition for both precomposed syllables and canonical Jamo input;
 - Dubeolsik keyboard representation with an explicitly documented layout;
 - APIs that distinguish representation kind rather than accepting ambiguous
@@ -97,13 +102,16 @@ Deliverables:
 - exhaustive generated tests over all 11,172 modern precomposed syllables,
   plus isolated Jamo, compatibility Jamo, mixed scripts, and boundaries.
 
-Exit gate: decomposition followed by composition recovers every modern Hangul
-syllable in the reference corpus, and every output mapping resolves to the
-expected original source slice.
+Exit gate: the compose/round-trip portion is satisfied via `compose_hangul`:
+decomposition followed by composition recovers all 11,172 modern Hangul
+syllables, and every contracted output maps to the full decomposed source
+slice. K1 remains open until the Dubeolsik representation and its mapping gate
+are complete.
 
 ## J0 — Japanese kana v0.1
 
-Begins only after K1 exits.
+Status: starts now per the ecosystem-wave adjudication, concurrently with the
+remaining K1 Dubeolsik work.
 
 Deliverables:
 
@@ -149,7 +157,7 @@ Full morphological analysis remains outside Yomi unless explicitly approved.
 ## Immediate next tasks
 
 1. Specify and implement the Dubeolsik keyboard representation.
-2. Run the Korean exit gate before beginning kana runtime code.
-3. Complete the kana exit gate before adding generated pinyin data.
+2. Begin J0 kana work per the ecosystem-wave adjudication.
+3. Complete the Korean and kana exit gates before adding generated pinyin data.
 4. Complete pinyin/initials provenance, ambiguity, mapping, and Yuragi `bjdx`
    integration evidence before declaring v0.1.
