@@ -2,6 +2,24 @@
 
 No generated lookup data is currently committed.
 
+The kana romanization fixture in `tests/kana_fixture_data.mojo` is a manually
+maintained normative table rather than generated lookup data. It enumerates
+both scripts, every standard precomposed and base-plus-combining voiced form,
+and every supported yoon and extended digraph. The scheme and the same complete
+tables are reviewable in `docs/romanization.md`; tests lock its 399 fixed-output
+rows and 52 explicit composition-equivalence rows.
+
+Kana scalar identities and standard dakuten/handakuten composition pairs were
+reviewed against **The Unicode Standard, Version 17.0.0**, Hiragana and
+Katakana block charts (retrieved 2026-08-20):
+
+- <https://www.unicode.org/charts/PDF/U3040.pdf>;
+- <https://www.unicode.org/charts/PDF/U30A0.pdf>.
+
+No external romanization database is embedded. Romanization outputs are Yomi's
+documented wapuro-flavored modified Hepburn convention, and the tests walk the
+checked-in rows directly.
+
 The Hangul choseong and decomposition implementations are reviewed against
 **The Unicode Standard, Version 17.0.0**, Section 3.12.5, “Sample Code for
 Hangul Algorithms”:

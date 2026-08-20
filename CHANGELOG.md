@@ -23,5 +23,8 @@ and uses semantic versioning after the first public release.
   mappings and an exhaustive 11,172-syllable round-trip oracle.
 - Add allocation-free Hiragana, Katakana, Kana, base-block Kanji, and modern
   precomposed Hangul routing predicates.
+- Add source-preserving `romanize_kana` with one documented ASCII
+  wapuro-flavored modified Hepburn scheme, NFC/NFD voicing equivalence,
+  exhaustive fixed-unit fixtures, and exact contextual kana mappings.
 - Gate source releases on full installed-package verification across the
   supported platform matrix.

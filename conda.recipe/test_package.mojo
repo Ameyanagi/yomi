@@ -1,5 +1,6 @@
-from yomi import decompose_hangul, hangul_choseong
 from std.testing import assert_equal
+
+from yomi import decompose_hangul, hangul_choseong, romanize_kana
 
 
 def main() raises:
@@ -43,3 +44,11 @@ def main() raises:
     assert_equal(nfd_mappings[0].source_end(), 3)
     assert_equal(nfd_mappings[2].source_start(), 6)
     assert_equal(nfd_mappings[2].source_end(), 9)
+
+    var kana = romanize_kana("ラーメン屋")
+    assert_equal(kana.text(), "raamen屋")
+    assert_equal(kana.mapping_count(), 5)
+    var kana_source = kana.source_ranges_for_output(0, 6)
+    assert_equal(len(kana_source), 1)
+    assert_equal(kana_source[0].start(), 0)
+    assert_equal(kana_source[0].end(), 12)

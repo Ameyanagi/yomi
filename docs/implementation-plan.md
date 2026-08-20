@@ -110,19 +110,20 @@ are complete.
 
 ## J0 — Japanese kana v0.1
 
-Status: starts now per the ecosystem-wave adjudication, concurrently with the
-remaining K1 Dubeolsik work.
+Status: implementation and review artifacts complete; the host compiler gate
+remains to be run on the pinned toolchain.
 
 Deliverables:
 
-- deterministic hiragana and katakana romanization;
+- deterministic hiragana and katakana romanization (implemented);
 - equivalent treatment of script variants where the documented scheme says
-  they are equivalent;
+  they are equivalent (implemented);
 - explicit behavior for small kana, yoon pairs, sokuon, prolonged sound marks,
-  syllabic `ん`, punctuation, and unmapped graphemes;
+  syllabic `ん`, punctuation, and unmapped graphemes (implemented);
 - mapping coverage for expansions and contractions such as a kana pair mapping
-  to one romanized syllable;
-- reference fixtures that state the chosen romanization convention.
+  to one romanized syllable (implemented);
+- reference fixtures that state the chosen romanization convention
+  (implemented in `docs/romanization.md` and the exhaustive checked-in fixture).
 
 Exit gate: every supported kana sequence has a documented result, unmapped text
 passes through losslessly, and mapping tests recover exact original ranges.
@@ -157,7 +158,7 @@ Full morphological analysis remains outside Yomi unless explicitly approved.
 ## Immediate next tasks
 
 1. Specify and implement the Dubeolsik keyboard representation.
-2. Begin J0 kana work per the ecosystem-wave adjudication.
+2. Run the J0 host compiler and test gate on the pinned Mojo toolchain.
 3. Complete the Korean and kana exit gates before adding generated pinyin data.
 4. Complete pinyin/initials provenance, ambiguity, mapping, and Yuragi `bjdx`
    integration evidence before declaring v0.1.
