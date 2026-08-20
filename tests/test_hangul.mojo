@@ -1,4 +1,4 @@
-from std.testing import TestSuite, assert_equal, assert_raises
+from std.testing import TestSuite, assert_equal, assert_raises, assert_true
 
 from yomi import decompose_hangul
 
@@ -102,22 +102,53 @@ def test_isolated_jamo_and_syllable_boundaries_pass_through() raises:
 
 
 def test_all_modern_syllables_round_trip_and_map_to_source() raises:
+    # Advance an explicit mixed-radix odometer instead of repeating the
+    # production quotient/modulus decomposition. With the legal Jamo range
+    # checks below, each counter state has exactly one canonical encoding.
+    var expected_leading = L_BASE
+    var expected_vowel = V_BASE
+    var expected_trailing = T_BASE
+    var lv_count = 0
+    var lvt_count = 0
+
+    assert_equal(S_COUNT, 11172)
     for syllable_index in range(S_COUNT):
         var value = S_BASE + syllable_index
         var representation = decompose_hangul(chr(value))
         var decomposed = representation.text()
         var components = [scalar.to_u32() for scalar in decomposed.codepoints()]
+
+        assert_equal(Int(components[0]), expected_leading)
+        assert_equal(Int(components[1]), expected_vowel)
+        assert_true(Int(components[0]) >= L_BASE)
+        assert_true(Int(components[0]) < L_BASE + L_COUNT)
+        assert_true(Int(components[1]) >= V_BASE)
+        assert_true(Int(components[1]) < V_BASE + V_COUNT)
         var trailing_index = 0
-        if len(components) == 3:
-            trailing_index = Int(components[2]) - T_BASE
-        else:
+        if expected_trailing == T_BASE:
             assert_equal(len(components), 2)
+            lv_count += 1
+        else:
+            assert_equal(len(components), 3)
+            assert_equal(Int(components[2]), expected_trailing)
+            assert_true(Int(components[2]) > T_BASE)
+            assert_true(Int(components[2]) < T_BASE + T_COUNT)
+            trailing_index = Int(components[2]) - T_BASE
+            lvt_count += 1
 
         var recomposed = S_BASE
         recomposed += (Int(components[0]) - L_BASE) * N_COUNT
         recomposed += (Int(components[1]) - V_BASE) * T_COUNT
         recomposed += trailing_index
         assert_equal(recomposed, value)
+
+        expected_trailing += 1
+        if expected_trailing == T_BASE + T_COUNT:
+            expected_trailing = T_BASE
+            expected_vowel += 1
+            if expected_vowel == V_BASE + V_COUNT:
+                expected_vowel = V_BASE
+                expected_leading += 1
 
         var mappings = representation.mapping_snapshot()
         assert_equal(len(mappings), len(components))
@@ -133,6 +164,12 @@ def test_all_modern_syllables_round_trip_and_map_to_source() raises:
         assert_equal(len(source), 1)
         assert_equal(source[0].start(), 0)
         assert_equal(source[0].end(), 3)
+
+    assert_equal(lv_count, 399)
+    assert_equal(lvt_count, 10773)
+    assert_equal(expected_leading, L_BASE + L_COUNT)
+    assert_equal(expected_vowel, V_BASE)
+    assert_equal(expected_trailing, T_BASE)
 
 
 def test_decomposition_revalidates_reachable_mutation() raises:

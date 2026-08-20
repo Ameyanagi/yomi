@@ -22,10 +22,18 @@ V = VBase + (SIndex mod NCount) div TCount
 T = TBase + SIndex mod TCount  (only when T != TBase)
 ```
 
-The exhaustive test applies that formula to every scalar in U+AC00..U+D7A3,
-recomposes the result, and verifies that every emitted Jamo maps to the exact
-three-byte source syllable. This is an algorithmic derivation; there is no
-generated decomposition table.
+The exhaustive test covers every scalar in U+AC00..U+D7A3 with a separate
+mixed-radix odometer oracle. The oracle advances trailing, vowel, and leading
+Jamo counters by explicit carries instead of repeating the implementation's
+division and remainder formula. It asserts the exact expected scalars, their
+legal modern-Jamo ranges, the 399 LV and 10,773 LVT cases, and every emitted
+Jamo's mapping to the exact three-byte source syllable.
+
+A generated normalization corpus is unnecessary for this algorithmic slice:
+the pinned Unicode constants plus legal digit ranges define a unique canonical
+mixed-radix decomposition, and the counter oracle enumerates every input and
+expected output without sharing production helpers. Future table-driven
+language data remains subject to the generated-artifact policy below.
 
 Canonical decomposed modern Hangul reads its first leading Jamo from the
 contiguous `LBase..LBase + LCount - 1` range (`U+1100..U+1112`) and uses the same
