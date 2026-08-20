@@ -23,4 +23,8 @@ procedure are committed. Consumers must not need the generator toolchain.
 
 ## Out of scope
 
-Fuzzy scoring, terminal UI, filesystem traversal, and full Japanese morphology are outside the initial package.
+Fuzzy scoring, terminal UI, filesystem traversal, full Japanese morphology, and
+lexical Mandarin polyphony are outside the initial package. Generic text
+coordinates, mapping construction, and source projection belong to Moji; Yomi's
+current equivalents are temporary compatibility code until the mandatory
+tagged-package integration gate.

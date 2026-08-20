@@ -12,6 +12,8 @@ The first implementation milestone is intentionally narrow: implement Hangul
 decomposition, choseong search, keyboard forms, kana romanization, and the
 licensed pinyin/initials data required by Yuragi's `bjdx` v0.1 proof, all with
 exact source byte ranges.
+Mandarin v0.1 uses Unicode `kMandarin` customary readings with explicit
+Hans/Hant regional selection; it does not claim exhaustive lexical polyphony.
 The project is independently installable and does not require any application
 from the wider ecosystem.
 
@@ -90,7 +92,11 @@ enforce field privacy; every public read rejects invalid reachable mutation.
 `mapping_snapshot()` validates once for efficient enumeration.
 `source_ranges_for_output()` projects a match to ordered exact source ranges,
 merging only overlapping or touching ranges and never bridging a source gap.
-The API is experimental and may change before v0.1.
+The current Yomi-local `SourceMapping`, `SourceRange`, and generic projection
+implementation are temporary compatibility APIs. Before v0.1 release,
+`PhoneticRepresentation` will compose tagged packaged Moji mapping values, and
+the temporary mapping exports will leave the Yomi root. No sibling source path
+is permitted. The API is experimental and may change before v0.1.
 
 ## Repository map
 
@@ -101,8 +107,9 @@ The API is experimental and may change before v0.1.
 - `docs/`: architecture, design, compatibility, roadmap, and release policy
 - `conda.recipe/`: local Rattler build recipe
 
-See [the architecture](docs/architecture.md), [design principles](docs/design.md),
-[roadmap](docs/roadmap.md), and
+See [the architecture](docs/architecture.md),
+[reference architecture](docs/reference-architecture.md),
+[design principles](docs/design.md), [roadmap](docs/roadmap.md), and
 [executable implementation plan](docs/implementation-plan.md) before proposing
 a new dependency or feature.
 

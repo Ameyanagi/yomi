@@ -61,3 +61,25 @@ Every future generated artifact must record:
 
 Generation tools are development dependencies. Consumers install the generated
 Mojo data and do not require Python, Rust, C, or another runtime.
+
+## Planned static policy manifests
+
+The Dubeolsik v0.1 authority is
+[`KS X 5002:2007`, *Keyboard layout for information processing*](https://www.kssn.net/search/stddetail.do?itemNo=K001010123285),
+reaffirmed as `KS X 5002(2023 확인)` on 2023-12-08. The standard text is not
+redistributed. Before runtime implementation, an independently authored
+`data/policies/dubeolsik-v1.md` manifest must record every unshifted/shifted
+mapping, reviewed edition/clauses, reviewer/date, independent fixtures,
+differential disagreements, and its SHA-256.
+
+Kana search-v1 is a Yomi-authored policy distributed under this repository's
+license. Before runtime implementation,
+`data/policies/kana-search-v1.md` must record every token/output decision,
+edge-case rationale, independent fixture provenance, pinned WanaKana
+differential results and accepted divergences, and its SHA-256. No WanaKana
+table, node tree, or fixture is copied.
+
+The first generated Mandarin slice accepts only Unicode 17.0.0 `kMandarin`.
+Its one or two values encode customary Hans/Hant regional preference, not an
+exhaustive list of lexical pronunciations. Richer alternatives require a
+separate post-v0.1 property, provenance, license, and semantics review.

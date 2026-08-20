@@ -19,11 +19,16 @@ deterministic and fully attributed.
   is a static reverse keyboard spelling, not a mutable input method.
 - Kana romanization uses one versioned Yomi search profile. It does not inherit
   case-driven or boolean-option behavior from another library.
-- Mandarin reading lookup exposes ambiguity. A customary `kMandarin` reading
-  is available only through an explicitly named Hans or Hant selection policy.
+- Mandarin v0.1 exposes Unicode `kMandarin` customary readings through an
+  explicitly named Hans or Hant selection policy. Its one or two regional
+  values are not presented as general lexical polyphony.
 - Unicode 17.0.0 is the only planned generated-data source for the first pinyin
   slice. Aggregated third-party reading databases remain excluded until every
   constituent source and transformation is licensed and checksum-pinned.
+- The current Yomi-local mapping values are temporary compatibility types.
+  Before v0.1 release, the language facade composes a tagged, packaged Moji
+  mapping implementation and Yomi stops growing generic range or projection
+  APIs.
 - No reference code, lookup table, XML keyboard map, or test corpus is copied.
 
 ## Pinned reference inventory
@@ -57,7 +62,7 @@ Relevant public reference APIs are:
 
 These APIs inform boundaries, not Yomi names or ownership rules.
 
-## Normative Unicode inputs
+## Normative inputs
 
 Yomi's normative language facts come from versioned Unicode material rather
 than a reference library's generated output.
@@ -69,7 +74,7 @@ than a reference library's generated output.
 | [`NormalizationTest.txt`](https://www.unicode.org/Public/17.0.0/ucd/NormalizationTest.txt) | Unicode 17.0.0 | `5019ffd530751a741900c849c0e010332f142a3612234639bd200b82138a87db` | Development-only conformance corpus |
 | [UAX #38](https://www.unicode.org/reports/tr38/tr38-39.html) | Unicode 17.0.0, revision 39, 2025-08-21 | Published specification | Unihan reading property syntax, ordering, and semantics |
 | [`Unihan.zip`](https://www.unicode.org/Public/17.0.0/ucd/Unihan.zip) | Unicode 17.0.0 | `f7a48b2b545acfaa77b2d607ae28747404ce02baefee16396c5d2d7a8ef34b5e` | Generator input; only approved properties are extracted |
-| `Unihan_Readings.txt` inside that archive | Unicode 17.0.0 | `575e69c9ad85a4737a889a4f94cbd987042a90a1a6cc16dd3f4ed995c715b17c` | `kMandarin` and reviewed alternative-reading properties |
+| `Unihan_Readings.txt` inside that archive | Unicode 17.0.0 | `575e69c9ad85a4737a889a4f94cbd987042a90a1a6cc16dd3f4ed995c715b17c` | `kMandarin` only for v0.1; any other property requires a later gate |
 | [Unicode License v3](https://www.unicode.org/license.txt) | retrieved 2026-08-20 | `e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96` | Notice must accompany redistributed derived data/documentation |
 
 The Hangul algorithm uses the normative `SBase`, `LBase`, `VBase`, `TBase`,
@@ -77,6 +82,23 @@ The Hangul algorithm uses the normative `SBase`, `LBase`, `VBase`, `TBase`,
 [`data-provenance.md`](data-provenance.md). It does not need generated Unicode
 tables. Pinyin generation initially accepts only reviewed fields from
 `Unihan_Readings.txt`; it must not ingest the pinyin-data aggregate.
+
+The Dubeolsik authority is
+[`KS X 5002:2007`, *Keyboard layout for information processing*](https://www.kssn.net/search/stddetail.do?itemNo=K001010123285),
+reaffirmed as `KS X 5002(2023 확인)` by the Korean Standards Association on
+2023-12-08. The standard text is not redistributed. Before implementation,
+`data/policies/dubeolsik-v1.md` must record every independently expressed
+unshifted and shifted key mapping, the reviewed standard edition and clauses,
+reviewer/date, independently authored expected fixtures, and the manifest
+SHA-256. Libhangul and CLDR may identify disagreements for review but are not
+table sources.
+
+`KanaRomanization.search_v1()` is a Yomi-authored interoperability policy, not
+a transcription of WanaKana or another romanizer. Before implementation,
+`data/policies/kana-search-v1.md` must record every token and output decision,
+the rationale for edge cases, independently authored expected fixtures, the
+pinned WanaKana differential result and every accepted divergence, and the
+manifest SHA-256. The manifest and resulting table are licensed with Yomi.
 
 ## Transformations versus language policy
 
@@ -91,8 +113,10 @@ owned source span + explicit policy
 It must not answer application questions such as which language to try, which
 reading is most likely in context, whether case-insensitive matching is enabled,
 or how alternatives are ranked. Yuragi owns `auto` language routing. Hibana
-owns scoring. Moji owns generic text coordinates once its tagged mapping
-contract is available.
+owns scoring. Moji owns generic text coordinates, mapping construction, and
+source projection once its tagged mapping contract is available. Until that
+integration gate, Yomi's current mapping implementation is frozen compatibility
+code rather than a second permanent foundation.
 
 Policy values are nominal and required at boundaries where multiple reasonable
 answers exist:
@@ -105,15 +129,17 @@ answers exist:
   preceding vowel, emits syllabic `n` without an apostrophe, and passes unmapped
   graphemes through exactly. A complete reviewed table must land before this
   policy is implemented.
-- Pinyin style is separate from reading selection. Planned styles are canonical
-  tone marks, plain Unicode with `ü`, keyboard ASCII with `ü -> v`, and initials.
-  There is no default style.
+- Pinyin style is applied only after customary reading selection. Planned
+  styles are canonical tone marks, plain Unicode with `ü`, keyboard ASCII with
+  `ü -> v`, and initials. There is no default style.
 - `ReadingSelection.unihan_mandarin_hans()` explicitly chooses the first
   `kMandarin` value, the preferred customary pronunciation for zh-Hans/CN.
   `ReadingSelection.unihan_mandarin_hant()` chooses the second value when UAX
   #38 supplies one for zh-Hant/TW, otherwise the sole value. Yomi has no default
-  locale. Asking for all alternatives returns all approved readings in stable
-  source order. Phrase-level disambiguation is post-v0.1.
+  locale. `mandarin_readings()` preserves the one or two regional values in
+  stable Unicode source order. It does not claim to enumerate every lexical
+  pronunciation. Lexical polyphony and phrase-level disambiguation are
+  post-v0.1 and require a separate property/provenance/semantics gate.
 - Simplified and traditional characters are looked up independently. Yomi does
   not silently convert one to the other.
 
@@ -126,8 +152,9 @@ never dropped, replaced with an empty string, or guessed from another language.
 public language facade
     -> nominal policy and reading-selection values
         -> Korean / kana / Mandarin transformation engines
-            -> source-mapping builder
-                -> private algorithm constants or generated lookup views
+            ├── private algorithm constants or generated lookup views
+            └── thin language-emission adapter
+                    -> packaged Moji mapped-text builder and projection
 
 development-only generators
     -> pinned licensed inputs
@@ -150,10 +177,13 @@ Operate on valid UTF-8 source spans. Korean uses arithmetic decomposition and a
 reviewed keyboard spelling. Kana uses a longest-supported-sequence scanner.
 Mandarin uses private scalar-indexed reading records.
 
-### Mapping builder
+### Mapping integration
 
-Owns output assembly and the output/source cursor invariants once. Language
-engines append only validated emitted spans and their exact source spans.
+Moji owns generic output assembly, range validation, cursor invariants, and
+source projection. Yomi's thin adapter appends language-specific emitted spans
+and their exact source spans. The current local builder exists only until the
+mandatory Moji integration gate and must not gain batch projection or new
+public range types.
 
 ### Private tables
 
@@ -167,7 +197,7 @@ reject duplicate or conflicting records, and emit byte-identical output.
 
 ## Exact source mappings
 
-The existing `PhoneticRepresentation` contract remains the foundation:
+The existing `PhoneticRepresentation` contract remains the temporary facade:
 
 - source and output are owned UTF-8 strings;
 - mappings use non-empty half-open byte ranges;
@@ -176,6 +206,12 @@ The existing `PhoneticRepresentation` contract remains the foundation:
 - expansions may emit several output spans for one source span;
 - contractions may emit one output span for several source scalars; and
 - pass-through text retains its exact source span.
+
+At the mandatory Moji integration gate, `PhoneticRepresentation` composes
+Moji's owned mapped-text value. Moji range and mapping values replace the
+current Yomi-local `SourceMapping` and `SourceRange` compatibility types; they
+are imported from `moji`, not re-exported from the Yomi package root. Yomi
+retains only language-specific construction and result semantics.
 
 Language-specific mapping rules are:
 
@@ -190,38 +226,40 @@ Language-specific mapping rules are:
 - a reading selection builds a normal `PhoneticRepresentation`, so downstream
   matching never needs to interpret generated-table offsets.
 
-The one-range `source_ranges_for_output()` API remains useful. Before Yuragi's
-integration gate, Yomi also needs a batch projection accepting ordered or
-unordered non-empty output ranges. It validates all ranges, projects them,
-sorts source ranges, and merges only overlap or adjacency. It must never replace
-discontiguous matcher positions with one bounding highlight.
+The one-range `source_ranges_for_output()` behavior remains useful, but generic
+projection belongs to Moji. If Yuragi needs ordered or unordered batch
+projection, that API lands and is tested in Moji before Yomi consumes it. Yomi
+does not add a competing batch query. Projection must sort source ranges and
+merge only overlap or adjacency; it never replaces discontiguous matcher
+positions with one bounding highlight.
 
-## Ambiguity and multiple readings
+## Regional customary Mandarin readings
 
-A bare `String` cannot express uncertainty, and expanding every per-character
-choice into whole-string Cartesian products is unbounded. The target is a
-source-owned reading sequence:
+A bare `String` cannot preserve the regional choice encoded by `kMandarin`.
+The v0.1 target is a source-owned customary-reading sequence:
 
 ```text
-ReadingSequence
+MandarinReadings
 ├── owned source text
-└── ordered ReadingUnit values
+└── ordered MandarinReadingUnit values
     ├── exact source byte range
-    └── one or more ordered ReadingAlternative values
+    └── one or two ordered RegionalReading values
         ├── canonical syllable
-        └── style projections
+        └── Hans/Hant applicability from kMandarin order
 ```
 
-`ReadingSequence` provides inspected counts and checked copies. Selection is a
-separate operation that requires either one explicit alternative index per
-ambiguous unit or a named `ReadingSelection` policy. Selection returns a
-`PhoneticRepresentation`. No method named `default`, `best`, or `first` is
-exported.
+`MandarinReadings` provides inspected counts and checked copies. Selection
+requires a named Hans or Hant `ReadingSelection` plus a `PinyinStyle`, and
+returns a `PhoneticRepresentation`. It does not accept per-unit alternative
+indices, because `kMandarin` does not enumerate lexical alternatives. No method
+named `default`, `best`, or `first` is exported.
 
-The order recorded by an upstream property is preserved as data, but Yomi does
-not reinterpret it as frequency or context probability unless the property
-specification explicitly says so. Duplicate spellings after tone removal are
-deduplicated stably while the canonical alternatives remain available.
+The order recorded by `kMandarin` is preserved as regional data and is not
+reinterpreted as frequency or context probability. Style projections are
+derived only during selection, so a canonical reading unit does not store
+duplicated derived spellings. Richer lexical alternatives require a post-v0.1
+proposal that approves specific properties or data sources, their semantics,
+licensing, merge rules, and bounded public representation.
 
 ## Minimal Mojo API target
 
@@ -242,30 +280,36 @@ from yomi import (
 var keys = hangul_dubeolsik("한국")
 var kana = romanize_kana("カメラ", KanaRomanization.search_v1())
 
-var readings = mandarin_readings("北京大学", PinyinStyle.keyboard_ascii())
-var selected = readings.select(ReadingSelection.unihan_mandarin_hans())
+var readings = mandarin_readings("北京大学")
+var selected = readings.select(
+    ReadingSelection.unihan_mandarin_hans(),
+    PinyinStyle.keyboard_ascii(),
+)
 ```
 
-`PhoneticRepresentation`, `SourceMapping`, and `SourceRange` remain public.
-`ReadingSequence` and its detached unit/alternative snapshots become public only
-when the ambiguity slice is implemented. Generated records, trie nodes, mapping
-builders, and language classifiers remain internal.
+`PhoneticRepresentation` remains Yomi's public language-specific facade. The
+current `SourceMapping` and `SourceRange` exports are explicitly temporary and
+leave the root API at the mandatory Moji integration gate. Consumers import
+Moji's nominal ranges and mapping values from `moji` rather than through Yomi.
+`MandarinReadings` and its detached unit/regional-reading snapshots become
+public only when the customary-reading slice is implemented. Generated records,
+trie nodes, mapping builders, and language classifiers remain internal.
 
 No root API accepts `lang="auto"`, a bag of boolean conversion options, an
 untyped integer style, or a callback into application scoring.
 
 ## Ownership, mutation, and errors
 
-- Results own source, output, mappings, reading units, and selected alternative
-  text. They do not borrow generated storage through a public lifetime.
+- Results own source, output, mappings, reading units, and selected regional
+  reading text. They do not borrow generated storage through a public lifetime.
 - Static generated tables are immutable implementation data. Lookup copies the
   small semantic record needed by the public result.
 - Mojo 1.0 underscore-prefixed fields are externally reachable. Every public
   semantic read revalidates current text, ranges, ordering, policy discriminants,
-  alternative counts, and selected indices.
+  regional-reading counts, and selection applicability.
 - Snapshot APIs validate once and return detached copies for linear iteration.
 - User-controlled invalid ranges, unsupported policy values, corrupted reachable
-  storage, and invalid alternative selections raise `Error`; they do not panic,
+  storage, and inapplicable regional selections raise `Error`; they do not panic,
   clamp, or fall back to a different language.
 - Valid but unknown text passes through. Invalid UTF-8 created through unsafe
   raw-byte mutation remains outside the safe `String`/`StringSlice` contract.
@@ -293,8 +337,9 @@ For the first Mandarin slice, only Unicode 17.0.0 `Unihan_Readings.txt` is
 approved. `kMandarin` provides one customary reading, or two values ordered for
 zh-Hans/CN then zh-Hant/TW. Selection is therefore explicitly locale-scoped;
 it is not a universal primary-reading claim. Additional Unihan reading
-properties require their own parser and semantics tests before joining the
-alternative set. The Unicode License v3 notice ships with derived data.
+properties require a separate post-v0.1 provenance and semantics proposal
+before Yomi claims lexical alternatives. The Unicode License v3 notice ships
+with derived data.
 
 The following are prohibited without a new provenance review:
 
@@ -304,10 +349,12 @@ The following are prohibited without a new provenance review:
 - importing the pinyin-data aggregate merely because its repository declares
   MIT. Its named inputs have independent provenance and licensing conditions.
 
-The Dubeolsik and kana policy tables must be independently authored from
-documented standards/behavioral requirements and reviewed entry by entry. A
-reference library may serve as a differential oracle during development but is
-never linked, invoked by consumers, or used to generate distributable tables.
+The Dubeolsik and kana policy tables must be independently authored and reviewed
+entry by entry through their required manifests. The Dubeolsik manifest pins
+`KS X 5002:2007`, reaffirmed in 2023; the kana manifest identifies search-v1 as
+Yomi-authored and records every differential disagreement. A reference library
+may serve as a differential oracle during development but is never linked,
+invoked by consumers, or used to generate distributable tables.
 
 ## Adopted and rejected ideas
 
@@ -365,15 +412,15 @@ Reject:
 
 Adopt:
 
-- distinct per-scalar selected and multiple-reading views;
+- a distinct per-scalar regional-customary-reading view for v0.1;
 - style projections over one canonical reading record;
 - compact deterministic scalar-indexed tables; and
-- feature evidence that ambiguity can be represented without phrase guessing.
+- evidence for a later, separately reviewed lexical-alternative representation.
 
 Reject:
 
 - flattening away unknown characters;
-- silently using the first reading;
+- silently selecting a Hans or Hant customary reading;
 - building tables during consumer installation;
 - exposing generated array/index layout; and
 - using a mixed aggregate data file before every constituent license and merge
@@ -386,10 +433,17 @@ Reject:
 - empty, ASCII, emoji, combining, mixed-script, and invalid-index cases;
 - complete output coverage and UTF-8 boundaries;
 - expansion, contraction, pass-through, reordered source spans, and exact
-  discontiguous batch projection;
-- direct mutation of every reachable text, range, policy, and alternative field;
+  discontiguous projection through the packaged Moji contract;
+- direct mutation of every reachable text, range, policy, and regional-reading
+  field;
 - detached snapshots that cannot mutate their owner; and
 - installed-package tests importing only the documented root surface.
+
+Until the Moji integration gate, compatibility tests retain the existing Yomi
+mapping invariants. After the gate, Moji owns generic invalid-range, coverage,
+mutation, and projection tests; Yomi tests only its language-emission adapter,
+exact language-specific spans, facade ownership, and installed-package
+composition.
 
 ### Korean
 
@@ -421,8 +475,8 @@ Reject:
   simplified/traditional independence;
 - cover both one-value and two-value `kMandarin` records, prove exact Hans/Hant
   selection ordering, and reject any call that omits the locale policy;
-- include multiple-reading characters such as `重`, `行`, and `还` without
-  selecting one implicitly;
+- verify that `重`, `行`, and `还` expose only their Unicode 17 `kMandarin`
+  customary reading and are not mislabeled as exhaustive lexical alternatives;
 - prove `北京大学 -> beijingdaxue` and initials `bjdx`, with each emitted syllable
   and initial mapping to its exact source ideograph; and
 - test a clean regeneration for byte-identical Mojo and manifest output.
@@ -436,37 +490,53 @@ fixtures and records the oracle command/mismatch review outside runtime code.
 Each item is one reviewable issue with code, focused tests, documentation, and
 an installed-package smoke whenever the root API changes.
 
-1. **K1.1 Dubeolsik contract:** approve the independently authored layout,
+1. **K1.1 Dubeolsik contract:** commit the `KS X 5002:2007`-pinned decision and
+   differential manifest, then approve the independently authored layout,
    canonical key spelling, compound rules, and complete fixtures; no runtime API.
 2. **K1.2 Dubeolsik representation:** add `hangul_dubeolsik` through the shared
    mapping builder and the full Korean mapping suite.
 3. **K1.3 Korean exit gate:** run exhaustive decomposition, keyboard, mutation,
    package, and downstream contract checks before any kana runtime code.
-4. **J0.1 Kana search-v1 policy:** approve the complete independently authored
-   table and edge-case corpus, including exact mapping expectations.
+4. **J0.1 Kana search-v1 policy:** commit the Yomi-authored decision and
+   differential manifest, then approve the complete table and edge-case corpus,
+   including exact mapping expectations.
 5. **J0.2 Kana scanner:** implement `KanaRomanization` and `romanize_kana` with
    longest-match scanning and no generated or external runtime dependency.
 6. **J0.3 Kana exit gate:** exhaust the supported table, mixed text, mutation,
    packaging, and mapping invariants before pinyin runtime code.
 7. **C0.1 Unihan provenance lock:** commit the Unicode license notice, manifest,
    checksum verifier, property allowlist, and generator specification.
-8. **C0.2 Reading-sequence contract:** implement owned reading units,
-   alternatives, nominal style/selection values, snapshots, mutation checks, and
-   selection into `PhoneticRepresentation` without tables.
+8. **C0.2 Customary-reading contract:** implement owned regional reading units,
+   nominal selection/style values, snapshots, mutation checks, and selection
+   into `PhoneticRepresentation` without tables or explicit alternative indices.
 9. **C0.3 Generated Mandarin tables:** generate private deterministic Mojo from
    approved Unicode 17.0.0 fields and prove clean byte-identical regeneration.
-10. **C0.4 Pinyin projections:** connect tables to canonical, plain Unicode,
-    keyboard ASCII, and initials styles with exact source mappings.
-11. **C0.5 v0.1/downstream gate:** prove ambiguity, unknown pass-through,
-    `北京大学`/`bjdx`, discontiguous highlights, installed packaging, and a pinned
-    Yuragi integration.
-12. **D0 separate proposal:** evaluate Japanese dictionary sources, tokenization,
+10. **C0.4 Pinyin selection/projections:** connect canonical regional readings
+    to explicit Hans/Hant selection and canonical, plain Unicode, keyboard ASCII,
+    and initials styles with exact source mappings.
+11. **M0.1 mandatory Moji integration:** depend on a tagged `mojo-moji`
+    distribution through the `moji` import,
+    compose its mapped-text/range/projection values behind Yomi's language
+    facade, remove Yomi's temporary mapping exports, and prove clean-prefix
+    installation without a sibling checkout. Any required batch projection lands
+    in Moji first. This gate blocks Yomi v0.1 release.
+12. **C0.5 v0.1/downstream gate:** prove regional customary selection, unknown
+    pass-through, `北京大学`/`bjdx`, discontiguous highlights, and installed
+    packaging. The pinned Yuragi integration runs in Yuragi or an external
+    integration matrix and consumes packaged Yomi and Moji artifacts only.
+13. **D0 separate proposal:** evaluate Japanese dictionary sources, tokenization,
     phrase boundaries, licensing, table size, and update cadence. No dictionary
     or morphology implementation starts under the v0.1 architecture.
 
-Moji integration is a separate dependency issue after a tagged package proves
-the byte/range contract Yomi needs. Until then, Yomi must not import sibling
-source or duplicate application language routing.
+Until M0.1, Yomi must not import sibling source or expand its generic mapping
+surface. The release gate uses the normal package dependency path only. Yomi
+never imports Yuragi; the downstream integration owner installs Yomi and Moji
+as packages.
+
+Lexical Mandarin alternatives are a separate post-v0.1 proposal. It must name
+the exact additional property or source, pin provenance and licenses, define
+merge/order semantics, bound result growth, and add independent ambiguity tests
+before any public API or table changes.
 
 ## Reproducing the reference checkout
 

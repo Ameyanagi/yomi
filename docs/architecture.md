@@ -1,6 +1,8 @@
 # Architecture
 
-Yomi owns CJK readings, romanization, keyboard forms, and source-preserving phonetic representations.
+Yomi owns CJK readings, romanization, keyboard forms, and the language-specific
+phonetic facade. Moji owns generic text coordinates, transformed-to-source
+mappings, and source projection.
 
 The research basis, pinned upstreams, data licenses, target layers, and ordered
 implementation gates are recorded in
@@ -8,7 +10,8 @@ implementation gates are recorded in
 
 ## Dependency boundary
 
-Allowed ecosystem dependencies: Moji after its mapping contract stabilizes; the v0.1 foundation otherwise uses only the Mojo standard library.
+Allowed ecosystem dependencies: the Mojo standard library and, before Yomi
+v0.1 release, a tagged packaged Moji with its stable mapping contract.
 Expected downstream consumers: Yuragi and other CJK-aware search or indexing applications.
 
 Dependencies point from applications and higher-level packages toward smaller
@@ -36,27 +39,32 @@ selection stay at explicit effect or backend boundaries.
 ## Representation contract
 
 Public transformations return `PhoneticRepresentation`, not an untracked
-`String`. The value owns both original source and transformed text. Its ordered
-`SourceMapping` values relate half-open output UTF-8 byte ranges to half-open
-ranges in that owned source. Mapping spans cover the entire transformed output
-without gaps or overlaps. Source and output spans must be in bounds and end on
-UTF-8 code-point boundaries. Expansions and contractions are allowed; equal
-output and source byte lengths are not assumed.
+`String`. The value owns both original source and transformed text. The current
+Yomi-local `SourceMapping` and `SourceRange` values are temporary compatibility
+types, not a stable second text foundation. Before v0.1 release,
+`PhoneticRepresentation` composes Moji's mapped-text value and consumers import
+nominal range/mapping types directly from `moji`.
+
+Moji mapping spans cover the entire transformed output without gaps or
+overlaps. Source and output spans must be in bounds and end on UTF-8 code-point
+boundaries. Expansions and contractions are allowed; equal output and source
+byte lengths are not assumed. Yomi owns only the language-specific decision
+about which emitted span maps to which exact source span.
 
 Mojo 1.0 does not enforce struct-field privacy, so underscore-prefixed storage
-is a convention rather than an invariant boundary. Every public representation
-or mapping read therefore revalidates current storage and raises if reachable
-mutation produced an invalid state. Boundary classification delegates to
-`StringSlice.is_codepoint_boundary()`. Yomi accepts Mojo `String`/`StringSlice`
-values under their valid-UTF-8 contract; corrupting a string through unsafe raw
-byte operations is outside the safe API contract.
+is a convention rather than an invariant boundary. Current compatibility reads
+revalidate mapping storage; after integration, Moji owns that invariant while
+Yomi revalidates its language policies and facade composition. Boundary
+classification delegates to `StringSlice.is_codepoint_boundary()`. Yomi accepts
+Mojo `String`/`StringSlice` values under their valid-UTF-8 contract; corrupting a
+string through unsafe raw byte operations is outside the safe API contract.
 
-`mapping_snapshot()` is the enumeration boundary: it validates the complete
-representation once and returns a detached mapping list, avoiding repeated
-whole-map validation in a loop. `source_ranges_for_output()` owns match
-projection policy. It sorts by source byte position and merges overlapping or
-touching spans, but returns separate spans across a gap so Yuragi never needs to
-reconstruct or accidentally broaden highlights.
+The current `mapping_snapshot()` and `source_ranges_for_output()` methods remain
+compatibility behavior only until the Moji integration gate. Moji owns
+validate-once enumeration and match projection, including source-position
+sorting, overlap/adjacency merging, and preservation of separate spans across a
+gap. Any batch projection required by Yuragi lands in Moji first; Yomi does not
+add a competing generic query.
 
 Algorithms operate on extended grapheme clusters at the public text boundary.
 An algorithm may inspect scalar values within a cluster, but pass-through text
