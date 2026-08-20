@@ -34,8 +34,8 @@ the semantics.
 
 Transformation names describe their direction. `romanize_kana` uses the
 verb-object form because it changes script into a representation.
-`to_hiragana` and `to_katakana` remain reserved for the script converters in
-the next milestone; they are not romanization aliases.
+`to_hiragana` and `to_katakana` are explicit script converters; they are not
+romanization aliases and accept no width or romaji options.
 
 ## Out of scope
 

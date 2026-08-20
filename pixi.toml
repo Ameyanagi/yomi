@@ -7,7 +7,7 @@ version = "0.0.0"
 
 [tasks]
 check = { depends-on = ["format-check", "test", "precompile"], description = "Run the complete validation suite" }
-example = { cmd = "mojo run -I src examples/basic.mojo", description = "Run the Korean source-mapping example" }
+example = { cmd = "mojo run -I src examples/korean.mojo && mojo run -I src examples/japanese.mojo", description = "Run the Korean and Japanese source-mapping examples" }
 format = { cmd = "bash scripts/format.sh", description = "Format Mojo source files" }
 format-check = { cmd = "bash scripts/check-format.sh", description = "Verify Mojo formatting without modifying source" }
 package = { cmd = "rattler-build build --recipe conda.recipe/recipe.yaml -c conda-forge -c https://conda.modular.com/max -c https://repo.prefix.dev/modular-community", description = "Build the local Conda package" }

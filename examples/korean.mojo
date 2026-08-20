@@ -1,4 +1,4 @@
-from yomi import decompose_hangul, hangul_choseong
+from yomi import compose_hangul, decompose_hangul, hangul_choseong
 
 
 def main() raises:
@@ -30,3 +30,12 @@ def main() raises:
             mapping.source_start(),
             mapping.source_end(),
         )
+
+    var decomposed = decomposition.text()
+    var composition = compose_hangul(decomposed)
+    print(composition.text())
+
+    var source_ranges = representation.source_ranges_for_output(0, 6)
+    for index in range(len(source_ranges)):
+        var source_range = source_ranges[index].copy()
+        print("choseong match -> source", source_range.start(), source_range.end())

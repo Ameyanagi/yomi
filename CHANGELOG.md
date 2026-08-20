@@ -26,5 +26,9 @@ and uses semantic versioning after the first public release.
 - Add source-preserving `romanize_kana` with one documented ASCII
   wapuro-flavored modified Hepburn scheme, NFC/NFD voicing equivalence,
   exhaustive fixed-unit fixtures, and exact contextual kana mappings.
+- Add source-preserving `to_hiragana` and `to_katakana` conversion with
+  NFC-canonicalized kana voicing contractions and exact pass-through mappings.
+- Split the public examples into Korean and Japanese finder tasks with exact
+  output-match-to-source-range projection.
 - Gate source releases on full installed-package verification across the
   supported platform matrix.

@@ -98,6 +98,40 @@ def main() raises:
     print(mapping.source_start(), mapping.source_end())  # 0 9
 ```
 
+## Japanese public slices
+
+`romanize_kana` supports source-preserving finder keys. A match for `raamen`
+in output bytes `[0, 6)` projects back to the exact katakana source range
+`[0, 12)` a fuzzy finder should highlight:
+
+```mojo
+from yomi import romanize_kana
+
+
+def main() raises:
+    var representation = romanize_kana("ラーメン屋")
+    print(representation.text())  # raamen屋
+
+    var source_ranges = representation.source_ranges_for_output(0, 6)
+    print(source_ranges[0].start(), source_ranges[0].end())  # 0 12
+```
+
+`to_hiragana` and `to_katakana` convert full-width kana scripts while
+preserving exact source ranges. Composable base-plus-voicing forms are
+canonicalized to precomposed NFC kana in the target script:
+
+```mojo
+from yomi import to_hiragana, to_katakana
+
+
+def main() raises:
+    print(to_hiragana("ラーメン").text())  # らーめん
+    print(to_katakana("らーめん").text())  # ラーメン
+```
+
+See [the full kana convention](docs/romanization.md) for romanization, script
+conversion, voicing, prolonged-mark, and pass-through behavior.
+
 The non-raising `is_hiragana`, `is_katakana`, `is_kana`, `is_kanji`, and
 `is_hangul_syllable` functions are allocation-free, per-scalar routing
 predicates for deciding whether to attempt a phonetic representation. They

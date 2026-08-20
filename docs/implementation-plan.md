@@ -110,8 +110,8 @@ are complete.
 
 ## J0 — Japanese kana v0.1
 
-Status: implementation and review artifacts complete; the host compiler gate
-remains to be run on the pinned toolchain.
+Status: romanization, script converters, per-language examples, and review
+artifacts are complete and pass the full locked check on the pinned toolchain.
 
 Deliverables:
 
@@ -122,12 +122,18 @@ Deliverables:
   syllabic `ん`, punctuation, and unmapped graphemes (implemented);
 - mapping coverage for expansions and contractions such as a kana pair mapping
   to one romanized syllable (implemented);
+- `to_hiragana` and `to_katakana` with one-scalar mappings, NFC/NFD voicing
+  agreement, and exact grapheme pass-through (implemented);
 - reference fixtures that state the chosen romanization convention
-  (implemented in `docs/romanization.md` and the exhaustive checked-in fixture).
+  (implemented in `docs/romanization.md` and the exhaustive checked-in fixture);
+- Korean and Japanese finder-oriented examples ending in exact source-range
+  projection (implemented).
 
-Exit gate: every supported kana sequence has a documented result, unmapped text
-passes through losslessly, and mapping tests recover exact original ranges.
-This gate opens the pinyin phase; it does not complete v0.1.
+Exit-gate evidence includes the 399-row fixed-output fixture table, the 52-row
+NFC/NFD voicing table, full script-conversion sweeps, and the `ラーメン屋`
+`raamen` projection from output bytes `[0, 6)` to source bytes `[0, 12)`.
+Unmapped text passes through losslessly and mapping tests recover exact
+original ranges. This gate opens the pinyin phase; it does not complete v0.1.
 
 ## C0 — Chinese pinyin v0.1
 

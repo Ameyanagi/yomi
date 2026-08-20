@@ -12,6 +12,23 @@ The scheme has two deliberate deviations from strict modified Hepburn:
 Every fixed-output supported unit is listed below. A slash joins equivalent
 hiragana and katakana spellings; it does not denote an alternative output.
 
+## Script conversion
+
+`to_hiragana` maps katakana U+30A1..U+30F6 and iteration marks U+30FD..U+30FE
+to the hiragana scalar 0x60 lower. `to_katakana` applies the exact inverse to
+hiragana U+3041..U+3096 and iteration marks U+309D..U+309E. Each converted
+scalar has one exact source mapping. The shared prolonged sound mark `ー` is
+unchanged, and `ヷヸヹヺ` pass through because they have no precomposed
+hiragana counterparts.
+
+Both converters canonicalize composable kana voicing forms to NFC in the
+target script. A base plus combining U+3099 or U+309A contracts to one
+precomposed kana with a single mapping over both source scalars; NFC and NFD
+inputs therefore produce identical transformed text. The deliberately
+excluded wa-row combinations pass through unchanged as one grapheme mapping.
+Kanji, ASCII, emoji, half-width katakana, punctuation, and every other
+non-kana grapheme also pass through unchanged with exact source ranges.
+
 ## Monographs
 
 Small vowels and small y-kana have their standalone results in this table.
