@@ -2,15 +2,30 @@
 
 No generated lookup data is currently committed.
 
-The initial Hangul choseong implementation is reviewed against **The Unicode
-Standard, Version 17.0.0**, Section 3.12.5, “Sample Code for Hangul Algorithms”:
+The Hangul choseong and decomposition implementations are reviewed against
+**The Unicode Standard, Version 17.0.0**, Section 3.12.5, “Sample Code for
+Hangul Algorithms”:
 
 - source: <https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/>;
 - retrieved: 2026-08-20;
 - algorithm constants used: `SBase = U+AC00`, `LBase = U+1100`,
-  `NCount = 588`, `LCount = 19`, and `SCount = 11,172`;
+  `VBase = U+1161`, `TBase = U+11A7`, `LCount = 19`, `VCount = 21`,
+  `TCount = 28`, `NCount = 588`, and `SCount = 11,172`;
 - implemented range: `U+AC00..U+D7A3`;
 - leading index formula: `(code_point - SBase) div NCount`.
+
+For `SIndex = code_point - SBase`, `decompose_hangul` emits:
+
+```text
+L = LBase + SIndex div NCount
+V = VBase + (SIndex mod NCount) div TCount
+T = TBase + SIndex mod TCount  (only when T != TBase)
+```
+
+The exhaustive test applies that formula to every scalar in U+AC00..U+D7A3,
+recomposes the result, and verifies that every emitted Jamo maps to the exact
+three-byte source syllable. This is an algorithmic derivation; there is no
+generated decomposition table.
 
 Canonical decomposed modern Hangul reads its first leading Jamo from the
 contiguous `LBase..LBase + LCount - 1` range (`U+1100..U+1112`) and uses the same

@@ -62,3 +62,12 @@ a modern precomposed Hangul syllable as one contraction: the base determines the
 choseong, extenders are consumed, and the output maps to the complete cluster.
 Canonical decomposed modern Hangul clusters beginning with U+1100..U+1112 use
 the same compatibility-choseong view as their NFC syllable equivalents.
+
+Hangul decomposition uses the Unicode algorithm for modern precomposed
+syllables. It emits separate leading, vowel, and optional trailing Jamo
+mappings, each pointing to the exact source syllable scalar. Any following
+combining or extender scalars in that source grapheme pass through with their
+own ranges; this prevents a match on an extender from broadening to the base
+syllable. Already decomposed Jamo input passes through unchanged with one exact
+mapping per scalar, giving NFC and NFD input the same transformed text without
+requiring a normalization table.

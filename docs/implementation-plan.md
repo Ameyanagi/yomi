@@ -78,10 +78,13 @@ prints the exact byte mappings; the full locked check passes.
 
 ## K1 — Complete Korean v0.1
 
+Status: in progress. Algorithmic decomposition and its exhaustive invariant
+gate are implemented; the Dubeolsik representation remains open.
+
 Deliverables:
 
 - algorithmic Hangul syllable decomposition into canonical leading, vowel,
-  and optional trailing Jamo;
+  and optional trailing Jamo (implemented);
 - choseong recognition for both precomposed syllables and canonical Jamo input;
 - Dubeolsik keyboard representation with an explicitly documented layout;
 - APIs that distinguish representation kind rather than accepting ambiguous
@@ -141,9 +144,8 @@ Full morphological analysis remains outside Yomi unless explicitly approved.
 
 ## Immediate next tasks
 
-1. Implement algorithmic Hangul decomposition and its exhaustive invariant test.
-2. Specify and implement the Dubeolsik keyboard representation.
-3. Run the Korean exit gate before beginning kana runtime code.
-4. Complete the kana exit gate before adding generated pinyin data.
-5. Complete pinyin/initials provenance, ambiguity, mapping, and Yuragi `bjdx`
+1. Specify and implement the Dubeolsik keyboard representation.
+2. Run the Korean exit gate before beginning kana runtime code.
+3. Complete the kana exit gate before adding generated pinyin data.
+4. Complete pinyin/initials provenance, ambiguity, mapping, and Yuragi `bjdx`
    integration evidence before declaring v0.1.

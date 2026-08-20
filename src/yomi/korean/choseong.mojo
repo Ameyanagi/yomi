@@ -3,6 +3,12 @@
 from std.collections import List
 
 from ..representation import PhoneticRepresentation, SourceMapping
+from .hangul import (
+    _first_codepoint,
+    _is_modern_leading_jamo,
+    _is_modern_syllable,
+    _leading_index,
+)
 
 
 def _compatibility_choseong(index: Int) -> String:
@@ -45,12 +51,6 @@ def _compatibility_choseong(index: Int) -> String:
     return "ㅎ"
 
 
-def _first_codepoint(grapheme: StringSlice) -> Int:
-    for scalar in grapheme.codepoints():
-        return Int(scalar.to_u32())
-    return -1
-
-
 def hangul_choseong(text: StringSlice) raises -> PhoneticRepresentation:
     """Convert precomposed Hangul syllables to compatibility choseong.
 
@@ -70,9 +70,9 @@ def hangul_choseong(text: StringSlice) raises -> PhoneticRepresentation:
         var source_length = grapheme.byte_length()
         var value = _first_codepoint(grapheme)
         var emitted = String(grapheme)
-        if value >= 0xAC00 and value <= 0xD7A3:
-            emitted = _compatibility_choseong((value - 0xAC00) // 588)
-        elif value >= 0x1100 and value <= 0x1112:
+        if _is_modern_syllable(value):
+            emitted = _compatibility_choseong(_leading_index(value))
+        elif _is_modern_leading_jamo(value):
             emitted = _compatibility_choseong(value - 0x1100)
 
         var output_length = emitted.byte_length()

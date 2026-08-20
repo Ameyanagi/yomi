@@ -37,7 +37,7 @@ The Mojo import is `yomi`. The eventual Conda distribution is
 `mojo-yomi`. Source lives under `src/yomi/`, whose
 `__init__.mojo` defines the package boundary.
 
-## First public slice
+## Korean public slices
 
 `hangul_choseong` gives NFC and canonically decomposed modern Hangul compatible
 choseong views and passes other grapheme clusters through unchanged:
@@ -58,6 +58,29 @@ def main() raises:
     var source_ranges = representation.source_ranges_for_output(0, 6)
     print(source_ranges[0].start(), source_ranges[0].end())
 ```
+
+`decompose_hangul` expands every modern precomposed Hangul syllable into its
+canonical leading, vowel, and optional trailing Jamo. Each emitted Jamo maps
+back to the exact source syllable bytes:
+
+```mojo
+from yomi import decompose_hangul
+
+
+def main() raises:
+    var representation = decompose_hangul("각")
+    print(representation.text())  # 각
+
+    var mappings = representation.mapping_snapshot()
+    for index in range(len(mappings)):
+        print(mappings[index].source_start(), mappings[index].source_end())
+        # Each Jamo maps to source bytes [0, 3).
+```
+
+Canonically decomposed input passes through unchanged with one mapping per
+scalar, so NFC and NFD inputs produce identical transformed text. Combining or
+extender code points after a precomposed syllable retain their own exact source
+ranges.
 
 Every mapping is an ordered pair of half-open UTF-8 byte ranges. Output ranges
 refer to the transformed text; source ranges refer to the original input. The

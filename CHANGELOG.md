@@ -17,5 +17,7 @@ and uses semantic versioning after the first public release.
 - Add canonical decomposed leading-Jamo choseong equivalence.
 - Add validate-once mapping snapshots and exact output-to-source range
   projection without bridging discontiguous highlights.
+- Add algorithmic canonical decomposition for all 11,172 modern Hangul
+  syllables with exact expansion mappings and NFC/NFD-equivalent output.
 - Gate source releases on full installed-package verification across the
   supported platform matrix.
