@@ -30,3 +30,24 @@ jobs:
           cache: true
       - name: Verify locked workspace
         run: pixi run --locked check
+
+  package:
+    name: Package Linux x86-64
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: prefix-dev/setup-pixi@v0.10.1
+        with:
+          pixi-version: v0.76.2
+          cache: true
+      - name: Verify package version
+        run: |
+          pixi_version=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' pixi.toml)
+          recipe_version=$(sed -n 's/^  version: "\([^"]*\)"$/\1/p' conda.recipe/recipe.yaml)
+          if [[ -z "$pixi_version" || -z "$recipe_version" || "$pixi_version" != "$recipe_version" ]]; then
+            echo "pixi.toml version '$pixi_version' does not match recipe version '$recipe_version'" >&2
+            exit 1
+          fi
+      - name: Build package
+        run: pixi run --locked package
