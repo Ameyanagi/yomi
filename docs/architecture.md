@@ -39,20 +39,21 @@ without gaps or overlaps. Source and output spans must be in bounds and end on
 UTF-8 code-point boundaries. Expansions and contractions are allowed; equal
 output and source byte lengths are not assumed.
 
-Mojo 1.0 does not enforce struct-field privacy, so underscore-prefixed storage
-is a convention rather than an invariant boundary. Every public representation
-or mapping read therefore revalidates current storage and raises if reachable
-mutation produced an invalid state. Boundary classification delegates to
+Construction validates representation, mapping, and source-range invariants;
+reads trust those values thereafter. Mojo 1.0 does not enforce struct-field
+privacy, so direct mutation of underscore-prefixed storage is out of contract.
+Validated types expose an explicit raising `validate()` checkpoint for unusual
+low-level work. Boundary classification delegates to
 `StringSlice.is_codepoint_boundary()`. Yomi accepts Mojo `String`/`StringSlice`
 values under their valid-UTF-8 contract; corrupting a string through unsafe raw
 byte operations is outside the safe API contract.
 
-`mapping_snapshot()` is the enumeration boundary: it validates the complete
-representation once and returns a detached mapping list, avoiding repeated
-whole-map validation in a loop. `source_ranges_for_output()` owns match
-projection policy. It sorts by source byte position and merges overlapping or
-touching spans, but returns separate spans across a gap so Yuragi never needs to
-reconstruct or accidentally broaden highlights.
+`mapping_snapshot()` is the enumeration boundary: it returns a detached mapping
+list without repeating construction-time validation. `source_ranges_for_output()`
+owns match projection policy. It binary-searches the output-ordered mappings,
+sorts overlaps by source byte position with the standard-library sort, and
+merges overlapping or touching spans. It returns separate spans across a gap so
+Yuragi never needs to reconstruct or accidentally broaden highlights.
 
 Algorithms operate on extended grapheme clusters at the public text boundary.
 An algorithm may inspect scalar values within a cluster, but pass-through text

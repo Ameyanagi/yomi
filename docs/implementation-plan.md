@@ -46,16 +46,19 @@ The invariants are:
 6. pass-through grapheme clusters retain their exact source range;
 7. empty input produces empty output and no mappings.
 
-Construction and every public read reject negative or empty spans,
-transformed-text gaps or overlaps, incomplete coverage, and source or output
-ranges that are out of bounds or end inside a UTF-8 scalar. Revalidation is
-required because Mojo 1.0 does not enforce field privacy.
+Construction rejects negative or empty spans, transformed-text gaps or
+overlaps, incomplete coverage, and source or output ranges that are out of
+bounds or end inside a UTF-8 scalar. Reads trust construction-validated values.
+Because Mojo 1.0 does not enforce field privacy, direct underscore-field
+mutation is out of contract and `validate()` is the explicit checkpoint after
+unusual low-level work.
 
-`mapping_snapshot()` validates once and returns a detached list for linear-time
-enumeration. `source_ranges_for_output()` converts a valid non-empty output
-match to source-ordered exact ranges. It merges source ranges that overlap or
-touch, but never bridges a gap or replaces discontiguous highlights with one
-bounding range. Yuragi must exercise that behavior at its mapping gate.
+`mapping_snapshot()` returns a detached list for linear-time enumeration.
+`source_ranges_for_output()` converts a valid non-empty output match to
+source-ordered exact ranges. It binary-searches the first overlapping mapping,
+sorts selected source ranges with the standard library, and merges ranges that
+overlap or touch. It never bridges a gap or replaces discontiguous highlights
+with one bounding range. Yuragi must exercise that behavior at its mapping gate.
 
 ## K0 — Representation and choseong (implemented)
 
@@ -63,8 +66,9 @@ Deliverables:
 
 - `SourceMapping` and `PhoneticRepresentation`;
 - checked construction that enforces transformed-output mapping invariants;
-- owned source context and durable validation on every public read;
-- validate-once mapping snapshots and exact discontiguous source projection;
+- owned source context, construction validation, trusted reads, and an explicit
+  validation checkpoint;
+- detached mapping snapshots and exact discontiguous source projection;
 - `hangul_choseong(text)` for precomposed Hangul syllables;
 - compatible choseong views for canonical decomposed modern Hangul;
 - compatibility choseong for all 19 leading consonants;

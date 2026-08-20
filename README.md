@@ -51,9 +51,8 @@ def main() raises:
     print(representation.text())  # ㅎㄱ notes
 
     var mappings = representation.mapping_snapshot()
-    var first = mappings[0].copy()
-    print(first.output_start(), first.output_end())
-    print(first.source_start(), first.source_end())
+    print(mappings[0].output_start(), mappings[0].output_end())
+    print(mappings[0].source_start(), mappings[0].source_end())
 
     var source_ranges = representation.source_ranges_for_output(0, 6)
     print(source_ranges[0].start(), source_ranges[0].end())
@@ -85,9 +84,12 @@ ranges.
 Every mapping is an ordered pair of half-open UTF-8 byte ranges. Output ranges
 refer to the transformed text; source ranges refer to the original input. The
 representation owns copies of both texts and validates mapping bounds and UTF-8
-boundaries against them. Accessors are fallible because Mojo 1.0 does not
-enforce field privacy; every public read rejects invalid reachable mutation.
-`mapping_snapshot()` validates once for efficient enumeration.
+boundaries against them at construction. Accessors trust the validated value
+and are non-raising except where an operation validates new input, such as a
+mapping index or output match range. Mojo 1.0 does not enforce field privacy,
+so direct mutation of underscore-prefixed storage is out of contract;
+`validate()` provides an explicit checkpoint for unusual low-level work.
+`mapping_snapshot()` returns a detached list for efficient enumeration.
 `source_ranges_for_output()` projects a match to ordered exact source ranges,
 merging only overlapping or touching ranges and never bridging a source gap.
 The API is experimental and may change before v0.1.

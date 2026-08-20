@@ -172,13 +172,11 @@ def test_all_modern_syllables_round_trip_and_map_to_source() raises:
     assert_equal(expected_trailing, T_BASE)
 
 
-def test_decomposition_revalidates_reachable_mutation() raises:
+def test_decomposition_validate_rejects_reachable_mutation() raises:
     var representation = decompose_hangul("각")
     representation._mappings[0]._source_end = 2
     with assert_raises():
-        _ = representation.text()
-    with assert_raises():
-        _ = representation.mapping_snapshot()
+        representation.validate()
 
 
 def main() raises:

@@ -11,12 +11,12 @@ and uses semantic versioning after the first public release.
 - Add source-preserving phonetic representation values.
 - Add precomposed Hangul choseong conversion with exact UTF-8 byte mappings.
 - Reject invalid mapping spans and incomplete transformed-output coverage.
-- Own source text, validate both sides of every mapping, and revalidate public
-  reads against externally reachable storage mutation.
+- Own source text and validate both sides of every mapping at construction,
+  with trusted non-raising reads and an explicit `validate()` checkpoint.
 - Define precomposed Hangul plus combining-extender choseong behavior.
 - Add canonical decomposed leading-Jamo choseong equivalence.
-- Add validate-once mapping snapshots and exact output-to-source range
-  projection without bridging discontiguous highlights.
+- Add detached mapping snapshots and exact output-to-source range projection
+  without bridging discontiguous highlights.
 - Add algorithmic canonical decomposition for all 11,172 modern Hangul
   syllables with exact expansion mappings and NFC/NFD-equivalent output.
 - Gate source releases on full installed-package verification across the

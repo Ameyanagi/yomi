@@ -7,8 +7,9 @@ struct SourceRange(Copyable):
     """One non-empty half-open byte range in original source text.
 
     Values returned by a representation projection are ordered by source byte
-    position. Standalone reads revalidate range shape after reachable storage
-    mutation.
+    position. Construction establishes the range invariant and reads trust it
+    thereafter. Direct mutation of underscore-prefixed storage is out of
+    contract; call `validate()` explicitly after unusual low-level mutation.
     """
 
     var _start: Int
@@ -17,20 +18,19 @@ struct SourceRange(Copyable):
     def __init__(out self, start: Int, end: Int) raises:
         self._start = start
         self._end = end
-        self._validate()
+        self.validate()
 
-    def _validate(self) raises:
+    def validate(self) raises:
+        """Validate the stored source range explicitly."""
         if self._start < 0 or self._end <= self._start:
             raise Error("source range must be nonnegative and non-empty")
 
-    def start(self) raises -> Int:
-        """Revalidate and return the inclusive source byte offset."""
-        self._validate()
+    def start(self) -> Int:
+        """Return the inclusive source byte offset."""
         return self._start
 
-    def end(self) raises -> Int:
-        """Revalidate and return the exclusive source byte offset."""
-        self._validate()
+    def end(self) -> Int:
+        """Return the exclusive source byte offset."""
         return self._end
 
 
@@ -39,9 +39,11 @@ struct SourceMapping(Copyable):
 
     All offsets are half-open byte offsets. A transformed source grapheme may
     occupy a different number of output bytes, so consumers must not assume
-    that the two ranges have equal lengths. This standalone value validates
-    range shape on every read; `PhoneticRepresentation` additionally validates
-    the ranges against its owned source and transformed text.
+    that the two ranges have equal lengths. Construction establishes range
+    shape; `PhoneticRepresentation` additionally validates the ranges against
+    its owned source and transformed text. Reads trust those invariants. Direct
+    mutation of underscore-prefixed storage is out of contract; call
+    `validate()` explicitly after unusual low-level mutation.
     """
 
     var _output_start: Int
@@ -60,32 +62,29 @@ struct SourceMapping(Copyable):
         self._output_end = output_end
         self._source_start = source_start
         self._source_end = source_end
-        self._validate()
+        self.validate()
 
-    def _validate(self) raises:
+    def validate(self) raises:
+        """Validate the stored output and source ranges explicitly."""
         if self._output_start < 0 or self._output_end <= self._output_start:
             raise Error("output mapping range must be nonnegative and non-empty")
         if self._source_start < 0 or self._source_end <= self._source_start:
             raise Error("source mapping range must be nonnegative and non-empty")
 
-    def output_start(self) raises -> Int:
-        """Revalidate and return the inclusive output byte offset."""
-        self._validate()
+    def output_start(self) -> Int:
+        """Return the inclusive output byte offset."""
         return self._output_start
 
-    def output_end(self) raises -> Int:
-        """Revalidate and return the exclusive output byte offset."""
-        self._validate()
+    def output_end(self) -> Int:
+        """Return the exclusive output byte offset."""
         return self._output_end
 
-    def source_start(self) raises -> Int:
-        """Revalidate and return the inclusive source byte offset."""
-        self._validate()
+    def source_start(self) -> Int:
+        """Return the inclusive source byte offset."""
         return self._source_start
 
-    def source_end(self) raises -> Int:
-        """Revalidate and return the exclusive source byte offset."""
-        self._validate()
+    def source_end(self) -> Int:
+        """Return the exclusive source byte offset."""
         return self._source_end
 
 
@@ -94,7 +93,10 @@ struct PhoneticRepresentation(Copyable):
 
     Mappings cover the transformed text from byte zero without gaps or
     overlaps and point only to valid source-text boundaries. Empty input has
-    empty transformed text and no mappings.
+    empty transformed text and no mappings. Construction establishes these
+    invariants and reads trust them thereafter. Direct mutation of
+    underscore-prefixed storage is out of contract; call `validate()`
+    explicitly after unusual low-level mutation.
     """
 
     var _source: String
@@ -110,13 +112,14 @@ struct PhoneticRepresentation(Copyable):
         self._source = source^
         self._text = text^
         self._mappings = mappings^
-        self._validate()
+        self.validate()
 
-    def _validate(self) raises:
+    def validate(self) raises:
+        """Validate owned text and all stored mappings explicitly."""
         var expected_output_start = 0
         for index in range(len(self._mappings)):
             var mapping = self._mappings[index].copy()
-            mapping._validate()
+            mapping.validate()
             if mapping._output_start != expected_output_start:
                 raise Error("output mappings must be ordered and gap-free")
             if not _is_utf8_boundary(self._text, mapping._output_end):
@@ -129,36 +132,30 @@ struct PhoneticRepresentation(Copyable):
         if expected_output_start != self._text.byte_length():
             raise Error("output mappings must cover the transformed text")
 
-    def source_text(self) raises -> String:
-        """Return a copy of the original source text after revalidation."""
-        self._validate()
+    def source_text(self) -> String:
+        """Return a copy of the original source text."""
         return self._source.copy()
 
-    def text(self) raises -> String:
-        """Revalidate the representation and return transformed text."""
-        self._validate()
+    def text(self) -> String:
+        """Return a copy of the transformed text."""
         return self._text.copy()
 
-    def mapping_count(self) raises -> Int:
-        """Revalidate and return the number of mapping spans."""
-        self._validate()
+    def mapping_count(self) -> Int:
+        """Return the number of mapping spans."""
         return len(self._mappings)
 
     def mapping(self, index: Int) raises -> SourceMapping:
-        """Revalidate and return a mapping, rejecting an invalid index."""
-        self._validate()
+        """Return a mapping, rejecting an invalid index."""
         if index < 0 or index >= len(self._mappings):
             raise Error("source mapping index is out of range")
         return self._mappings[index].copy()
 
-    def mapping_snapshot(self) raises -> List[SourceMapping]:
-        """Validate once and copy all mappings for linear-time enumeration.
+    def mapping_snapshot(self) -> List[SourceMapping]:
+        """Copy all mappings for linear-time enumeration.
 
-        The returned list is detached from the representation. Each mapping
-        still validates its own range shape on accessor calls, while callers
-        avoid revalidating the complete representation for every index.
+        The returned list is detached from the representation, and its mapping
+        values retain the construction-validated, trusted-read contract.
         """
-        self._validate()
         return self._mappings.copy()
 
     def source_ranges_for_output(
@@ -171,7 +168,6 @@ struct PhoneticRepresentation(Copyable):
         Overlapping or touching ranges merge; a gap is never bridged by a
         bounding range.
         """
-        self._validate()
         if output_start < 0 or output_end <= output_start:
             raise Error("matched output range must be nonnegative and non-empty")
         if not _is_utf8_boundary(self._text, output_start):
@@ -180,13 +176,13 @@ struct PhoneticRepresentation(Copyable):
             raise Error("matched output end must be a UTF-8 boundary")
 
         var ranges = List[SourceRange]()
-        for index in range(len(self._mappings)):
+        var index = _first_mapping_ending_after(self._mappings, output_start)
+        while index < len(self._mappings):
             var mapping = self._mappings[index].copy()
-            if (
-                mapping._output_start < output_end
-                and mapping._output_end > output_start
-            ):
-                ranges.append(SourceRange(mapping._source_start, mapping._source_end))
+            if mapping._output_start >= output_end:
+                break
+            ranges.append(SourceRange(mapping._source_start, mapping._source_end))
+            index += 1
 
         _sort_source_ranges(ranges)
         return _merge_source_ranges(ranges^)
@@ -198,19 +194,28 @@ def _is_utf8_boundary(text: StringSlice, offset: Int) -> Bool:
     return text.is_codepoint_boundary(offset)
 
 
+def _first_mapping_ending_after(
+    mappings: List[SourceMapping], output_start: Int
+) -> Int:
+    var lower = 0
+    var upper = len(mappings)
+    while lower < upper:
+        var middle = lower + (upper - lower) // 2
+        if mappings[middle]._output_end <= output_start:
+            lower = middle + 1
+        else:
+            upper = middle
+    return lower
+
+
 def _sort_source_ranges(mut ranges: List[SourceRange]):
-    for index in range(1, len(ranges)):
-        var value = ranges[index].copy()
-        var cursor = index
-        while cursor > 0:
-            var previous = ranges[cursor - 1].copy()
-            if previous._start < value._start or (
-                previous._start == value._start and previous._end <= value._end
-            ):
-                break
-            ranges[cursor] = previous.copy()
-            cursor -= 1
-        ranges[cursor] = value.copy()
+    @parameter
+    def less(left: SourceRange, right: SourceRange) -> Bool:
+        return left._start < right._start or (
+            left._start == right._start and left._end < right._end
+        )
+
+    sort[less](ranges[:])
 
 
 def _merge_source_ranges(var ranges: List[SourceRange]) raises -> List[SourceRange]:

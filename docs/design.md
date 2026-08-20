@@ -10,6 +10,9 @@
 - Establish correctness and reference fixtures before optimization.
 - Make invalid public configuration unrepresentable when practical; otherwise
   reject it explicitly.
+- Validate semantic invariants at construction and trust values on subsequent
+  reads. Direct underscore-field mutation is out of contract; public
+  `validate()` methods provide explicit checkpoints for unusual low-level work.
 - Preserve source mappings, numerical tolerances, ownership, and provenance as
   first-class data when the domain requires them.
 - Do not add a framework-wide array, executor, renderer, or application model.

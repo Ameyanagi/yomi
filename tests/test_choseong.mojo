@@ -7,6 +7,36 @@ from std.testing import (
 from yomi import PhoneticRepresentation, SourceMapping, SourceRange, hangul_choseong
 
 
+def _read_validated_values_without_raises(
+    representation: PhoneticRepresentation,
+    mapping: SourceMapping,
+    source_range: SourceRange,
+) -> Int:
+    var mappings = representation.mapping_snapshot()
+    return (
+        representation.source_text().byte_length()
+        + representation.text().byte_length()
+        + representation.mapping_count()
+        + len(mappings)
+        + mapping.output_start()
+        + mapping.output_end()
+        + mapping.source_start()
+        + mapping.source_end()
+        + source_range.start()
+        + source_range.end()
+    )
+
+
+def test_validated_value_reads_are_non_raising() raises:
+    var representation = hangul_choseong("한")
+    var mapping = SourceMapping(0, 1, 0, 1)
+    var source_range = SourceRange(0, 1)
+    assert_equal(
+        _read_validated_values_without_raises(representation, mapping, source_range),
+        11,
+    )
+
+
 def test_empty_input_has_no_mappings() raises:
     var representation = hangul_choseong("")
     assert_equal(representation.source_text(), "")
@@ -152,46 +182,30 @@ def test_representation_rejects_invalid_source_ranges() raises:
         _ = PhoneticRepresentation("a", "x", out_of_bounds^)
 
 
-def test_public_reads_reject_mutated_mapping_storage() raises:
+def test_representation_validate_rejects_mutated_mapping_storage() raises:
     var representation = hangul_choseong("한")
     representation._mappings[0]._source_end = 2
     with assert_raises():
-        _ = representation.source_text()
-    with assert_raises():
-        _ = representation.text()
-    with assert_raises():
-        _ = representation.mapping_count()
-    with assert_raises():
-        _ = representation.mapping(0)
+        representation.validate()
 
 
-def test_public_reads_reject_mutated_text_storage() raises:
+def test_representation_validate_rejects_mutated_text_storage() raises:
     var source_mutated = hangul_choseong("한")
     source_mutated._source = "a"
     with assert_raises():
-        _ = source_mutated.source_text()
-    with assert_raises():
-        _ = source_mutated.mapping(0)
+        source_mutated.validate()
 
     var output_mutated = hangul_choseong("한")
     output_mutated._text = "x"
     with assert_raises():
-        _ = output_mutated.text()
-    with assert_raises():
-        _ = output_mutated.mapping_count()
+        output_mutated.validate()
 
 
-def test_mapping_reads_reject_mutated_storage() raises:
+def test_mapping_validate_rejects_mutated_storage() raises:
     var mapping = SourceMapping(0, 1, 0, 1)
     mapping._source_start = -1
     with assert_raises():
-        _ = mapping.output_start()
-    with assert_raises():
-        _ = mapping.output_end()
-    with assert_raises():
-        _ = mapping.source_start()
-    with assert_raises():
-        _ = mapping.source_end()
+        mapping.validate()
 
 
 def test_mapping_snapshot_supports_linear_enumeration() raises:
@@ -205,15 +219,15 @@ def test_mapping_snapshot_supports_linear_enumeration() raises:
 
     snapshot[0]._source_start = -1
     with assert_raises():
-        _ = snapshot[0].source_end()
+        snapshot[0].validate()
     assert_equal(representation.mapping(0).source_end(), 3)
 
     representation._mappings[0]._source_end = 2
     with assert_raises():
-        _ = representation.mapping_snapshot()
+        representation.validate()
 
 
-def test_source_range_reads_reject_invalid_or_mutated_storage() raises:
+def test_source_range_rejects_invalid_construction_and_validation() raises:
     with assert_raises():
         _ = SourceRange(-1, 1)
     with assert_raises():
@@ -222,9 +236,7 @@ def test_source_range_reads_reject_invalid_or_mutated_storage() raises:
     var source_range = SourceRange(0, 1)
     source_range._end = 0
     with assert_raises():
-        _ = source_range.start()
-    with assert_raises():
-        _ = source_range.end()
+        source_range.validate()
 
 
 def test_output_projection_merges_only_touching_or_overlapping_source() raises:
