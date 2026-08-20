@@ -2,6 +2,10 @@
 
 Yomi owns CJK readings, romanization, keyboard forms, and source-preserving phonetic representations.
 
+The research basis, pinned upstreams, data licenses, target layers, and ordered
+implementation gates are recorded in
+[the reference architecture](reference-architecture.md).
+
 ## Dependency boundary
 
 Allowed ecosystem dependencies: Moji after its mapping contract stabilizes; the v0.1 foundation otherwise uses only the Mojo standard library.
