@@ -1,0 +1,16 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+  - repo: local
+    hooks:
+      - id: mblack
+        name: mojo format (mblack)
+        entry: mblack
+        language: python
+        additional_dependencies: ['mblack==26.5.0']
+        files: '\.mojo$'
