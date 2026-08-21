@@ -23,7 +23,13 @@ struct SourceRange(Copyable):
     def validate(self) raises:
         """Validate the stored source range explicitly."""
         if self._start < 0 or self._end <= self._start:
-            raise Error("source range must be nonnegative and non-empty")
+            raise Error(
+                "source range ["
+                + String(self._start)
+                + ", "
+                + String(self._end)
+                + ") is invalid: start must be >= 0 and end must be > start"
+            )
 
     def start(self) -> Int:
         """Return the inclusive source byte offset."""
@@ -67,9 +73,21 @@ struct SourceMapping(Copyable):
     def validate(self) raises:
         """Validate the stored output and source ranges explicitly."""
         if self._output_start < 0 or self._output_end <= self._output_start:
-            raise Error("output mapping range must be nonnegative and non-empty")
+            raise Error(
+                "output mapping range ["
+                + String(self._output_start)
+                + ", "
+                + String(self._output_end)
+                + ") is invalid: start must be >= 0 and end must be > start"
+            )
         if self._source_start < 0 or self._source_end <= self._source_start:
-            raise Error("source mapping range must be nonnegative and non-empty")
+            raise Error(
+                "source mapping range ["
+                + String(self._source_start)
+                + ", "
+                + String(self._source_end)
+                + ") is invalid: start must be >= 0 and end must be > start"
+            )
 
     def output_start(self) -> Int:
         """Return the inclusive output byte offset."""
@@ -116,21 +134,72 @@ struct PhoneticRepresentation(Copyable):
 
     def validate(self) raises:
         """Validate owned text and all stored mappings explicitly."""
+        var text_length = self._text.byte_length()
+        var source_length = self._source.byte_length()
         var expected_output_start = 0
         for index in range(len(self._mappings)):
             var mapping = self._mappings[index].copy()
             mapping.validate()
             if mapping._output_start != expected_output_start:
-                raise Error("output mappings must be ordered and gap-free")
+                raise Error(
+                    "output mapping at index "
+                    + String(index)
+                    + " starts at "
+                    + String(mapping._output_start)
+                    + ", but ordered, gap-free mappings require output start "
+                    + String(expected_output_start)
+                    + "; set this mapping's output start to "
+                    + String(expected_output_start)
+                )
             if not _is_utf8_boundary(self._text, mapping._output_end):
-                raise Error("output mapping range must end at a UTF-8 boundary")
+                raise Error(
+                    "output mapping at index "
+                    + String(index)
+                    + " has invalid end offset "
+                    + String(mapping._output_end)
+                    + " for transformed text with byte length "
+                    + String(text_length)
+                    + ": end must be a UTF-8 code-point boundary within [0, "
+                    + String(text_length)
+                    + "]; choose an in-bounds boundary offset"
+                )
             if not _is_utf8_boundary(self._source, mapping._source_start):
-                raise Error("source mapping range must start at a UTF-8 boundary")
+                raise Error(
+                    "source mapping at index "
+                    + String(index)
+                    + " has invalid start offset "
+                    + String(mapping._source_start)
+                    + " for source text with byte length "
+                    + String(source_length)
+                    + ": start must be a UTF-8 code-point boundary within [0, "
+                    + String(source_length)
+                    + "]; choose an in-bounds boundary offset"
+                )
             if not _is_utf8_boundary(self._source, mapping._source_end):
-                raise Error("source mapping range must end at a UTF-8 boundary")
+                raise Error(
+                    "source mapping at index "
+                    + String(index)
+                    + " has invalid end offset "
+                    + String(mapping._source_end)
+                    + " for source text with byte length "
+                    + String(source_length)
+                    + ": end must be a UTF-8 code-point boundary within [0, "
+                    + String(source_length)
+                    + "]; choose an in-bounds boundary offset"
+                )
             expected_output_start = mapping._output_end
-        if expected_output_start != self._text.byte_length():
-            raise Error("output mappings must cover the transformed text")
+        if expected_output_start != text_length:
+            raise Error(
+                "output mappings have covered length "
+                + String(expected_output_start)
+                + ", but transformed text byte length is "
+                + String(text_length)
+                + "; mappings must cover [0, "
+                + String(text_length)
+                + "); add or extend mappings to cover all "
+                + String(text_length)
+                + " bytes"
+            )
 
     def source_text(self) -> String:
         """Return a copy of the original source text."""
@@ -146,8 +215,20 @@ struct PhoneticRepresentation(Copyable):
 
     def mapping(self, index: Int) raises -> SourceMapping:
         """Return a mapping, rejecting an invalid index."""
-        if index < 0 or index >= len(self._mappings):
-            raise Error("source mapping index is out of range")
+        var mapping_count = len(self._mappings)
+        if index < 0 or index >= mapping_count:
+            var mapping_count_description = String(mapping_count) + " mappings"
+            if mapping_count == 1:
+                mapping_count_description = String("1 mapping")
+            raise Error(
+                "mapping index "
+                + String(index)
+                + " is out of range for "
+                + mapping_count_description
+                + "; valid indexes are [0, "
+                + String(mapping_count)
+                + ")"
+            )
         return self._mappings[index].copy()
 
     def mapping_snapshot(self) -> List[SourceMapping]:
@@ -168,12 +249,74 @@ struct PhoneticRepresentation(Copyable):
         Overlapping or touching ranges merge; a gap is never bridged by a
         bounding range.
         """
-        if output_start < 0 or output_end <= output_start:
-            raise Error("matched output range must be nonnegative and non-empty")
+        if output_start < 0:
+            raise Error(
+                "output range start "
+                + String(output_start)
+                + " must be >= 0; choose a nonnegative start offset"
+            )
+        if output_end < output_start:
+            raise Error(
+                "output range ["
+                + String(output_start)
+                + ", "
+                + String(output_end)
+                + ") is reversed: end must be >= start; swap the values or "
+                "choose an end at or after " + String(output_start)
+            )
+        if output_end == output_start:
+            raise Error(
+                "output range ["
+                + String(output_start)
+                + ", "
+                + String(output_end)
+                + ") is empty: end must be greater than start; choose an end "
+                "greater than " + String(output_start)
+            )
+
+        var text_length = self._text.byte_length()
+        if output_start > text_length:
+            raise Error(
+                "output range start "
+                + String(output_start)
+                + " exceeds transformed text length "
+                + String(text_length)
+                + "; choose a start offset within [0, "
+                + String(text_length)
+                + "]"
+            )
+        if output_end > text_length:
+            raise Error(
+                "output range end "
+                + String(output_end)
+                + " exceeds transformed text length "
+                + String(text_length)
+                + "; choose an end offset within [0, "
+                + String(text_length)
+                + "]"
+            )
         if not _is_utf8_boundary(self._text, output_start):
-            raise Error("matched output start must be a UTF-8 boundary")
+            raise Error(
+                "output range start "
+                + String(output_start)
+                + " is not a UTF-8 code-point boundary in transformed text with byte"
+                " length "
+                + String(text_length)
+                + "; align the start to a boundary within [0, "
+                + String(text_length)
+                + "]"
+            )
         if not _is_utf8_boundary(self._text, output_end):
-            raise Error("matched output end must be a UTF-8 boundary")
+            raise Error(
+                "output range end "
+                + String(output_end)
+                + " is not a UTF-8 code-point boundary in transformed text with byte"
+                " length "
+                + String(text_length)
+                + "; align the end to a boundary within [0, "
+                + String(text_length)
+                + "]"
+            )
 
         var ranges = List[SourceRange]()
         var index = _first_mapping_ending_after(self._mappings, output_start)

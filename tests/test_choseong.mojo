@@ -124,27 +124,69 @@ def test_precomposed_hangul_consumes_combining_extenders() raises:
 
 def test_mapping_rejects_out_of_range_indices() raises:
     var representation = hangul_choseong("한")
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "mapping index -1 is out of range for 1 mapping; valid indexes are [0, 1)"
+        )
+    ):
         _ = representation.mapping(-1)
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "mapping index 1 is out of range for 1 mapping; valid indexes are [0, 1)"
+        )
+    ):
         _ = representation.mapping(1)
+
+    var empty = hangul_choseong("")
+    with assert_raises(
+        contains=(
+            "mapping index 0 is out of range for 0 mappings; valid indexes are [0, 0)"
+        )
+    ):
+        _ = empty.mapping(0)
 
 
 def test_source_mapping_rejects_empty_or_negative_ranges() raises:
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "output mapping range [-1, 1) is invalid: start must be >= 0 and "
+            "end must be > start"
+        )
+    ):
         _ = SourceMapping(-1, 1, 0, 1)
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "output mapping range [0, 0) is invalid: start must be >= 0 and "
+            "end must be > start"
+        )
+    ):
         _ = SourceMapping(0, 0, 0, 1)
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "source mapping range [-1, 1) is invalid: start must be >= 0 and "
+            "end must be > start"
+        )
+    ):
         _ = SourceMapping(0, 1, -1, 1)
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "source mapping range [0, 0) is invalid: start must be >= 0 and "
+            "end must be > start"
+        )
+    ):
         _ = SourceMapping(0, 1, 0, 0)
 
 
 def test_representation_rejects_uncovered_output() raises:
     var mappings = List[SourceMapping]()
     mappings.append(SourceMapping(0, 1, 0, 1))
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "output mappings have covered length 1, but transformed text byte "
+            "length is 2; mappings must cover [0, 2); add or extend mappings "
+            "to cover all 2 bytes"
+        )
+    ):
         _ = PhoneticRepresentation("a", "ab", mappings^)
 
 
@@ -152,13 +194,25 @@ def test_representation_rejects_gaps_and_overlaps() raises:
     var gapped = List[SourceMapping]()
     gapped.append(SourceMapping(0, 1, 0, 1))
     gapped.append(SourceMapping(2, 3, 1, 2))
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "output mapping at index 1 starts at 2, but ordered, gap-free "
+            "mappings require output start 1; set this mapping's output start "
+            "to 1"
+        )
+    ):
         _ = PhoneticRepresentation("ab", "abc", gapped^)
 
     var overlapping = List[SourceMapping]()
     overlapping.append(SourceMapping(0, 2, 0, 1))
     overlapping.append(SourceMapping(1, 3, 1, 2))
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "output mapping at index 1 starts at 1, but ordered, gap-free "
+            "mappings require output start 2; set this mapping's output start "
+            "to 2"
+        )
+    ):
         _ = PhoneticRepresentation("ab", "abc", overlapping^)
 
 
@@ -166,19 +220,37 @@ def test_representation_rejects_utf8_interior_boundaries() raises:
     var mappings = List[SourceMapping]()
     mappings.append(SourceMapping(0, 1, 0, 3))
     mappings.append(SourceMapping(1, 3, 0, 3))
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "output mapping at index 0 has invalid end offset 1 for "
+            "transformed text with byte length 3: end must be a UTF-8 code-point "
+            "boundary within [0, 3]; choose an in-bounds boundary offset"
+        )
+    ):
         _ = PhoneticRepresentation("한", "한", mappings^)
 
 
 def test_representation_rejects_invalid_source_ranges() raises:
     var interior = List[SourceMapping]()
     interior.append(SourceMapping(0, 1, 0, 2))
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "source mapping at index 0 has invalid end offset 2 for source text "
+            "with byte length 3: end must be a UTF-8 code-point boundary within [0, "
+            "3]; choose an in-bounds boundary offset"
+        )
+    ):
         _ = PhoneticRepresentation("한", "x", interior^)
 
     var out_of_bounds = List[SourceMapping]()
     out_of_bounds.append(SourceMapping(0, 1, 0, 2))
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "source mapping at index 0 has invalid end offset 2 for source text "
+            "with byte length 1: end must be a UTF-8 code-point boundary within [0, "
+            "1]; choose an in-bounds boundary offset"
+        )
+    ):
         _ = PhoneticRepresentation("a", "x", out_of_bounds^)
 
 
@@ -228,14 +300,27 @@ def test_mapping_snapshot_supports_linear_enumeration() raises:
 
 
 def test_source_range_rejects_invalid_construction_and_validation() raises:
-    with assert_raises():
-        _ = SourceRange(-1, 1)
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "source range [-1, 5) is invalid: start must be >= 0 and end must "
+            "be > start"
+        )
+    ):
+        _ = SourceRange(-1, 5)
+    with assert_raises(
+        contains=(
+            "source range [1, 1) is invalid: start must be >= 0 and end must be > start"
+        )
+    ):
         _ = SourceRange(1, 1)
 
     var source_range = SourceRange(0, 1)
     source_range._end = 0
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "source range [0, 0) is invalid: start must be >= 0 and end must be > start"
+        )
+    ):
         source_range.validate()
 
 
@@ -273,15 +358,64 @@ def test_output_projection_sorts_reordered_source_ranges() raises:
 
 
 def test_output_projection_rejects_invalid_match_ranges() raises:
-    var representation = hangul_choseong("한")
-    with assert_raises():
+    var representation = hangul_choseong("한국어")
+    with assert_raises(
+        contains="output range start -1 must be >= 0; choose a nonnegative start offset"
+    ):
         _ = representation.source_ranges_for_output(-1, 3)
-    with assert_raises():
+    with assert_raises(
+        contains=(
+            "output range [6, 2) is reversed: end must be >= start; swap the "
+            "values or choose an end at or after 6"
+        )
+    ):
+        _ = representation.source_ranges_for_output(6, 2)
+    with assert_raises(
+        contains=(
+            "output range [0, 0) is empty: end must be greater than start; "
+            "choose an end greater than 0"
+        )
+    ):
         _ = representation.source_ranges_for_output(0, 0)
-    with assert_raises():
-        _ = representation.source_ranges_for_output(0, 4)
-    with assert_raises():
-        _ = representation.source_ranges_for_output(1, 2)
+    with assert_raises(
+        contains=(
+            "output range end 100 exceeds transformed text length 9; choose an "
+            "end offset within [0, 9]"
+        )
+    ):
+        _ = representation.source_ranges_for_output(0, 100)
+    with assert_raises(
+        contains=(
+            "output range start 10 exceeds transformed text length 9; choose a "
+            "start offset within [0, 9]"
+        )
+    ):
+        _ = representation.source_ranges_for_output(10, 11)
+    with assert_raises(
+        contains=(
+            "output range start 1 is not a UTF-8 code-point boundary in "
+            "transformed text with byte length 9; align the start to a boundary within "
+            "[0, 9]"
+        )
+    ):
+        _ = representation.source_ranges_for_output(1, 3)
+    with assert_raises(
+        contains=(
+            "output range end 2 is not a UTF-8 code-point boundary in "
+            "transformed text with byte length 9; align the end to a boundary within "
+            "[0, 9]"
+        )
+    ):
+        _ = representation.source_ranges_for_output(0, 2)
+
+    var empty = hangul_choseong("")
+    with assert_raises(
+        contains=(
+            "output range end 1 exceeds transformed text length 0; choose an "
+            "end offset within [0, 0]"
+        )
+    ):
+        _ = empty.source_ranges_for_output(0, 1)
 
 
 def main() raises:
