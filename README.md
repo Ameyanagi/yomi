@@ -1,43 +1,78 @@
 # Yomi
 
-> **Experimental — API not yet released.**
-
 CJK phonetic representations and readings for Mojo.
 
-## Scope
+> **Experimental — API not yet released.**
 
-Yomi produces CJK phonetic representations while preserving exact mappings to original source ranges.
+## Install
 
-The first implementation milestone is intentionally narrow: implement Hangul
-decomposition, choseong search, keyboard forms, kana romanization, and the
-licensed pinyin/initials data required by Yuragi's `bjdx` v0.1 proof, all with
-exact source byte ranges.
-The project is independently installable and does not require any application
-from the wider ecosystem.
-
-## Development
-
-Install [Pixi](https://pixi.sh/), then run:
+In a [Pixi](https://pixi.sh/) project, add the hosted Mojo ecosystem channel
+and install the Conda package:
 
 ```sh
+pixi project channel add https://ameyanagi.github.io/mojo-channel
+pixi add mojo-yomi
+```
+
+The Mojo import stays `yomi`; the package name on the hosted channel is
+`mojo-yomi`.
+
+Alternatively, work from a source checkout:
+
+```sh
+git clone https://github.com/Ameyanagi/yomi.git
+cd yomi
 pixi install --locked
 pixi run check
 pixi run example
 ```
 
-The exact stable Mojo compiler and all development dependencies are captured in
-`pixi.lock`. Runtime and library code is Mojo-first and pure Mojo wherever
-practical. Build-time data generation may use another language when justified,
-but generated outputs must be deterministic, checksum-pinned, licensed, and
-documented.
+Run your own file against the checkout with
+`pixi run mojo run -I src your_file.mojo`.
 
-## Package
+## Quickstart
 
-The Mojo import is `yomi`. The eventual Conda distribution is
-`mojo-yomi`. Source lives under `src/yomi/`, whose
-`__init__.mojo` defines the package boundary.
+Romanize kana for search while retaining the source bytes behind a match:
+
+```mojo
+from yomi import romanize_kana
+
+
+def main() raises:
+    var representation = romanize_kana("ラーメン屋")
+    print(representation.text())  # raamen屋
+
+    var source_ranges = representation.source_ranges_for_output(0, 6)
+    print(source_ranges[0].start(), source_ranges[0].end())  # 0 12
+```
+
+## Real task: highlight a fuzzy-finder match
+
+A finder can match `raamen` in output bytes `[7, 13)` and project it back to
+the exact katakana source bytes `[7, 19)` to highlight, without including the
+following kanji:
+
+```mojo
+from yomi import romanize_kana
+
+
+def main() raises:
+    var candidate = romanize_kana("札幌 ラーメン屋")
+    print(candidate.text())  # 札幌 raamen屋
+
+    var match_start = 7
+    var match_end = 13
+    var source_ranges = candidate.source_ranges_for_output(
+        match_start, match_end
+    )
+    for index in range(len(source_ranges)):
+        var source_range = source_ranges[index].copy()
+        print(source_range.start(), source_range.end())  # 7 19
+```
 
 ## Korean public slices
+
+### `hangul_choseong`
 
 `hangul_choseong` gives NFC and canonically decomposed modern Hangul compatible
 choseong views and passes other grapheme clusters through unchanged:
@@ -51,12 +86,14 @@ def main() raises:
     print(representation.text())  # ㅎㄱ notes
 
     var mappings = representation.mapping_snapshot()
-    print(mappings[0].output_start(), mappings[0].output_end())
-    print(mappings[0].source_start(), mappings[0].source_end())
+    print(mappings[0].output_start(), mappings[0].output_end())  # 0 3
+    print(mappings[0].source_start(), mappings[0].source_end())  # 0 3
 
     var source_ranges = representation.source_ranges_for_output(0, 6)
-    print(source_ranges[0].start(), source_ranges[0].end())
+    print(source_ranges[0].start(), source_ranges[0].end())  # 0 6
 ```
+
+### `decompose_hangul`
 
 `decompose_hangul` expands every modern precomposed Hangul syllable into its
 canonical leading, vowel, and optional trailing Jamo. Each emitted Jamo maps
@@ -81,16 +118,20 @@ scalar, so NFC and NFD inputs produce identical transformed text. Combining or
 extender code points after a precomposed syllable retain their own exact source
 ranges.
 
+### `compose_hangul`
+
 `compose_hangul` contracts modern conjoining Jamo, or a precomposed LV syllable
-plus a trailing Jamo, to one modern Hangul syllable. The single mapping spans
-all source scalars consumed by the contraction:
+plus a trailing Jamo, to one modern Hangul syllable. The composed input below
+is the three conjoining Jamo U+1100 U+1161 U+11A8, which occupy 9 UTF-8 bytes.
+The single mapping spans all source scalars consumed by the contraction:
 
 ```mojo
-from yomi import compose_hangul
+from yomi import compose_hangul, decompose_hangul
 
 
 def main() raises:
-    var representation = compose_hangul("각")
+    var decomposed = decompose_hangul("각")
+    var representation = compose_hangul(decomposed.text())
     print(representation.text())  # 각
 
     var mapping = representation.mapping(0)
@@ -100,21 +141,7 @@ def main() raises:
 
 ## Japanese public slices
 
-`romanize_kana` supports source-preserving finder keys. A match for `raamen`
-in output bytes `[0, 6)` projects back to the exact katakana source range
-`[0, 12)` a fuzzy finder should highlight:
-
-```mojo
-from yomi import romanize_kana
-
-
-def main() raises:
-    var representation = romanize_kana("ラーメン屋")
-    print(representation.text())  # raamen屋
-
-    var source_ranges = representation.source_ranges_for_output(0, 6)
-    print(source_ranges[0].start(), source_ranges[0].end())  # 0 12
-```
+### `to_hiragana` and `to_katakana`
 
 `to_hiragana` and `to_katakana` convert full-width kana scripts while
 preserving exact source ranges. Composable base-plus-voicing forms are
@@ -132,11 +159,24 @@ def main() raises:
 See [the full kana convention](docs/romanization.md) for romanization, script
 conversion, voicing, prolonged-mark, and pass-through behavior.
 
+### Script predicates
+
 The non-raising `is_hiragana`, `is_katakana`, `is_kana`, `is_kanji`, and
 `is_hangul_syllable` functions are allocation-free, per-scalar routing
 predicates for deciding whether to attempt a phonetic representation. They
 require every scalar to belong to the documented script set and return `False`
-for empty input.
+for empty input:
+
+```mojo
+from yomi import is_hangul_syllable, is_hiragana, is_kana, is_kanji, is_katakana
+
+
+def main() raises:
+    print(is_hiragana("ひらがな"), is_katakana("カタカナ"))
+    print(is_kana("らーメン"), is_kanji("札幌"), is_hangul_syllable("한국"))
+```
+
+## Mapping model
 
 Every mapping is an ordered pair of half-open UTF-8 byte ranges. Output ranges
 refer to the transformed text; source ranges refer to the original input. The
@@ -151,6 +191,30 @@ so direct mutation of underscore-prefixed storage is out of contract;
 merging only overlapping or touching ranges and never bridging a source gap.
 The API is experimental and may change before v0.1.
 
+## Scope
+
+Yomi produces CJK phonetic representations while preserving exact mappings to
+original source ranges.
+
+The first implementation milestone is intentionally narrow: implement Hangul
+decomposition, choseong search, keyboard forms, kana romanization, and the
+licensed pinyin/initials data required by Yuragi's `bjdx` v0.1 proof, all with
+exact source byte ranges. The project is independently installable and does not
+require any application from the wider ecosystem.
+
+The exact stable Mojo compiler and all development dependencies are captured in
+`pixi.lock`. Runtime and library code is Mojo-first and pure Mojo wherever
+practical. Build-time data generation may use another language when justified,
+but generated outputs must be deterministic, checksum-pinned, licensed, and
+documented.
+
+## Documentation
+
+See [the architecture](docs/architecture.md), [design principles](docs/design.md),
+[roadmap](docs/roadmap.md), and
+[executable implementation plan](docs/implementation-plan.md) before proposing
+a new dependency or feature.
+
 ## Repository map
 
 - `src/yomi/`: library or application source
@@ -159,11 +223,6 @@ The API is experimental and may change before v0.1.
 - `benchmarks/`: reproducible methodology and later benchmark programs
 - `docs/`: architecture, design, compatibility, roadmap, and release policy
 - `conda.recipe/`: local Rattler build recipe
-
-See [the architecture](docs/architecture.md), [design principles](docs/design.md),
-[roadmap](docs/roadmap.md), and
-[executable implementation plan](docs/implementation-plan.md) before proposing
-a new dependency or feature.
 
 ## License
 
