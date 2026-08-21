@@ -1,6 +1,13 @@
 from std.testing import assert_equal
 
-from yomi import decompose_hangul, hangul_choseong, romanize_kana
+from yomi import (
+    compose_hangul,
+    decompose_hangul,
+    decompose_hangul_compatibility,
+    hangul_choseong,
+    is_hangul_jamo,
+    to_romaji,
+)
 
 
 def main() raises:
@@ -45,7 +52,12 @@ def main() raises:
     assert_equal(nfd_mappings[2].source_start(), 6)
     assert_equal(nfd_mappings[2].source_end(), 9)
 
-    var kana = romanize_kana("ラーメン屋")
+    var compatibility = decompose_hangul_compatibility("한")
+    assert_equal(compatibility.text(), "ㅎㅏㄴ")
+    assert_equal(compose_hangul(compatibility.text()).text(), "한")
+    assert_equal(is_hangul_jamo(compatibility.text()), True)
+
+    var kana = to_romaji("ラーメン屋")
     assert_equal(kana.text(), "raamen屋")
     assert_equal(kana.mapping_count(), 5)
     var kana_source = kana.source_ranges_for_output(0, 6)

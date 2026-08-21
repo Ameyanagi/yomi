@@ -102,3 +102,25 @@ def is_hangul_syllable(text: StringSlice) -> Bool:
         if value < 0xAC00 or value > 0xD7A3:
             return False
     return saw_scalar
+
+
+def is_hangul_jamo(text: StringSlice) -> Bool:
+    """Return whether modern Hangul-Jamo routing should be attempted.
+
+    This per-scalar predicate accepts conjoining leading U+1100--U+1112,
+    vowel U+1161--U+1175, and trailing U+11A8--U+11C2 Jamo, plus compatibility
+    Jamo U+3131--U+3163. Every scalar must be accepted, and empty input returns
+    False.
+    """
+    var saw_scalar = False
+    for scalar in text.codepoints():
+        saw_scalar = True
+        var value = Int(scalar.to_u32())
+        if not (
+            (value >= 0x1100 and value <= 0x1112)
+            or (value >= 0x1161 and value <= 0x1175)
+            or (value >= 0x11A8 and value <= 0x11C2)
+            or (value >= 0x3131 and value <= 0x3163)
+        ):
+            return False
+    return saw_scalar

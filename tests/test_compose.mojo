@@ -53,6 +53,63 @@ def test_precomposed_lv_plus_trailing_jamo_composes() raises:
     assert_equal(mapping.source_end(), 6)
 
 
+def test_compatibility_jamo_word_composes_with_per_syllable_mappings() raises:
+    var representation = compose_hangul("ㅎㅏㄴㄱㅡㄹ")
+    assert_equal(representation.text(), "한글")
+    assert_equal(representation.mapping_count(), 2)
+
+    var first = representation.mapping(0)
+    assert_equal(first.output_start(), 0)
+    assert_equal(first.output_end(), 3)
+    assert_equal(first.source_start(), 0)
+    assert_equal(first.source_end(), 9)
+
+    var second = representation.mapping(1)
+    assert_equal(second.output_start(), 3)
+    assert_equal(second.output_end(), 6)
+    assert_equal(second.source_start(), 9)
+    assert_equal(second.source_end(), 18)
+
+
+def test_mixed_compatibility_and_conjoining_jamo_compose() raises:
+    var representation = compose_hangul("ㅎᅡㄴᄀㅡᆯ")
+    assert_equal(representation.text(), "한글")
+    assert_equal(representation.mapping_count(), 2)
+    assert_equal(representation.mapping(0).source_start(), 0)
+    assert_equal(representation.mapping(0).source_end(), 9)
+    assert_equal(representation.mapping(1).source_start(), 9)
+    assert_equal(representation.mapping(1).source_end(), 18)
+
+
+def test_compatibility_trailing_lookahead_resolves_next_leading() raises:
+    assert_equal(compose_hangul("ㄱㅏㄱㅏ").text(), "가가")
+    assert_equal(compose_hangul("ㄱㅏㄱ").text(), "각")
+    assert_equal(compose_hangul("ㄱㅏㄴㅡ").text(), "가느")
+
+    var split = compose_hangul("ㄱㅏㄱㅏ")
+    assert_equal(split.mapping_count(), 2)
+    assert_equal(split.mapping(0).source_start(), 0)
+    assert_equal(split.mapping(0).source_end(), 6)
+    assert_equal(split.mapping(1).source_start(), 6)
+    assert_equal(split.mapping(1).source_end(), 12)
+
+
+def test_non_final_compatibility_consonant_starts_or_passes_through() raises:
+    var isolated = compose_hangul("ㄱㅏㄸ")
+    assert_equal(isolated.text(), "가ㄸ")
+    assert_equal(isolated.mapping_count(), 2)
+    assert_equal(isolated.mapping(0).source_start(), 0)
+    assert_equal(isolated.mapping(0).source_end(), 6)
+    assert_equal(isolated.mapping(1).source_start(), 6)
+    assert_equal(isolated.mapping(1).source_end(), 9)
+
+    var leading = compose_hangul("ㄱㅏㄸㅏ")
+    assert_equal(leading.text(), "가따")
+    assert_equal(leading.mapping_count(), 2)
+    assert_equal(leading.mapping(1).source_start(), 6)
+    assert_equal(leading.mapping(1).source_end(), 12)
+
+
 def test_isolated_and_incomplete_jamo_pass_through_per_scalar() raises:
     var leading = compose_hangul("ᄀ")
     assert_equal(leading.text(), "ᄀ")

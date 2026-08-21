@@ -35,11 +35,11 @@ def _append_segment(
     mut transformed: String,
     mut mappings: List[SourceMapping],
     mut output_cursor: Int,
-) raises:
+):
     var output_length = text.byte_length()
     transformed += text
     mappings.append(
-        SourceMapping(
+        SourceMapping._from_validated(
             output_cursor,
             output_cursor + output_length,
             source_start,
@@ -49,9 +49,7 @@ def _append_segment(
     output_cursor += output_length
 
 
-def _convert_kana(
-    text: StringSlice, to_hiragana: Bool
-) raises -> PhoneticRepresentation:
+def _convert_kana(text: StringSlice, to_hiragana: Bool) -> PhoneticRepresentation:
     var source = String(text)
     var transformed = String()
     var mappings = List[SourceMapping]()
@@ -104,10 +102,10 @@ def _convert_kana(
             )
         source_cursor = source_end
 
-    return PhoneticRepresentation(source^, transformed^, mappings^)
+    return PhoneticRepresentation._from_validated(source^, transformed^, mappings^)
 
 
-def to_hiragana(text: StringSlice) raises -> PhoneticRepresentation:
+def to_hiragana(text: StringSlice) -> PhoneticRepresentation:
     """Convert katakana with one mapping per converted scalar, except that a
     base kana plus combining voicing mark contracts from two source scalars to
     one NFC hiragana scalar. Every other grapheme passes through with its exact
@@ -117,13 +115,12 @@ def to_hiragana(text: StringSlice) raises -> PhoneticRepresentation:
     lower. The shared prolonged sound mark U+30FC is unchanged. U+30F7..U+30FA
     have no precomposed hiragana counterparts and pass through unchanged.
     Composable hiragana or katakana NFD voicing pairs canonicalize to NFC in
-    the target script. No input is invalid; ``raises`` is solely the checked
-    representation-construction path.
+    the target script. No input is invalid.
     """
     return _convert_kana(text, True)
 
 
-def to_katakana(text: StringSlice) raises -> PhoneticRepresentation:
+def to_katakana(text: StringSlice) -> PhoneticRepresentation:
     """Convert hiragana with one mapping per converted scalar, except that a
     base kana plus combining voicing mark contracts from two source scalars to
     one NFC katakana scalar. Every other grapheme passes through with its exact
@@ -132,7 +129,6 @@ def to_katakana(text: StringSlice) raises -> PhoneticRepresentation:
     Hiragana U+3041..U+3096 and U+309D..U+309E map to the katakana scalar 0x60
     higher. The shared prolonged sound mark U+30FC is unchanged. Composable
     hiragana or katakana NFD voicing pairs canonicalize to NFC in the target
-    script. No input is invalid; ``raises`` is solely the checked
-    representation-construction path.
+    script. No input is invalid.
     """
     return _convert_kana(text, False)

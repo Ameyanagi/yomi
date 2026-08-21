@@ -1,8 +1,8 @@
-from yomi import romanize_kana, to_hiragana
+from yomi import to_romaji, to_hiragana
 
 
 def main() raises:
-    var romanized = romanize_kana("ラーメン屋")
+    var romanized = to_romaji("ラーメン屋")
     print(romanized.text())
 
     var romanized_mappings = romanized.mapping_snapshot()

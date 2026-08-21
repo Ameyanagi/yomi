@@ -35,11 +35,11 @@ Run your own file against the checkout with
 Romanize kana for search while retaining the source bytes behind a match:
 
 ```mojo
-from yomi import romanize_kana
+from yomi import to_romaji
 
 
 def main() raises:
-    var representation = romanize_kana("ラーメン屋")
+    var representation = to_romaji("ラーメン屋")
     print(representation.text())  # raamen屋
 
     var source_ranges = representation.source_ranges_for_output(0, 6)
@@ -53,11 +53,11 @@ the exact katakana source bytes `[7, 19)` to highlight, without including the
 following kanji:
 
 ```mojo
-from yomi import romanize_kana
+from yomi import to_romaji
 
 
 def main() raises:
-    var candidate = romanize_kana("札幌 ラーメン屋")
+    var candidate = to_romaji("札幌 ラーメン屋")
     print(candidate.text())  # 札幌 raamen屋
 
     var match_start = 7
@@ -93,19 +93,23 @@ def main() raises:
     print(source_ranges[0].start(), source_ranges[0].end())  # 0 6
 ```
 
-### `decompose_hangul`
+### `decompose_hangul` and `decompose_hangul_compatibility`
 
 `decompose_hangul` expands every modern precomposed Hangul syllable into its
-canonical leading, vowel, and optional trailing Jamo. Each emitted Jamo maps
-back to the exact source syllable bytes:
+canonical conjoining NFD leading, vowel, and optional trailing Jamo. These Jamo
+can render like the original joined syllable. Use
+`decompose_hangul_compatibility` for visibly separated, keyboard-typable
+compatibility Jamo: `decompose_hangul_compatibility("한").text() == "ㅎㅏㄴ"`.
+Each emitted Jamo maps back to the exact source syllable bytes:
 
 ```mojo
-from yomi import decompose_hangul
+from yomi import decompose_hangul, decompose_hangul_compatibility
 
 
-def main() raises:
+def main():
     var representation = decompose_hangul("각")
     print(representation.text())  # 각
+    print(decompose_hangul_compatibility("한").text())  # ㅎㅏㄴ
 
     var mappings = representation.mapping_snapshot()
     for index in range(len(mappings)):
@@ -120,10 +124,11 @@ ranges.
 
 ### `compose_hangul`
 
-`compose_hangul` contracts modern conjoining Jamo, or a precomposed LV syllable
-plus a trailing Jamo, to one modern Hangul syllable. The composed input below
-is the three conjoining Jamo U+1100 U+1161 U+11A8, which occupy 9 UTF-8 bytes.
-The single mapping spans all source scalars consumed by the contraction:
+`compose_hangul` accepts modern conjoining leading, vowel, and trailing Jamo;
+compatibility Jamo U+3131--U+3163; and a precomposed LV syllable plus a trailing
+Jamo. The decomposed input below is U+1100 U+1161 U+11A8, which occupies 9
+UTF-8 bytes. The single mapping spans all source scalars consumed by the
+contraction:
 
 ```mojo
 from yomi import compose_hangul, decompose_hangul
@@ -133,6 +138,7 @@ def main() raises:
     var decomposed = decompose_hangul("각")
     var representation = compose_hangul(decomposed.text())
     print(representation.text())  # 각
+    print(compose_hangul("ㅎㅏㄴㄱㅡㄹ").text())  # 한글
 
     var mapping = representation.mapping(0)
     print(mapping.output_start(), mapping.output_end())  # 0 3
@@ -151,7 +157,7 @@ canonicalized to precomposed NFC kana in the target script:
 from yomi import to_hiragana, to_katakana
 
 
-def main() raises:
+def main():
     print(to_hiragana("ラーメン").text())  # らーめん
     print(to_katakana("らーめん").text())  # ラーメン
 ```
@@ -161,30 +167,39 @@ conversion, voicing, prolonged-mark, and pass-through behavior.
 
 ### Script predicates
 
-The non-raising `is_hiragana`, `is_katakana`, `is_kana`, `is_kanji`, and
-`is_hangul_syllable` functions are allocation-free, per-scalar routing
-predicates for deciding whether to attempt a phonetic representation. They
-require every scalar to belong to the documented script set and return `False`
-for empty input:
+The non-raising `is_hiragana`, `is_katakana`, `is_kana`, `is_kanji`,
+`is_hangul_syllable`, and `is_hangul_jamo` functions are allocation-free,
+per-scalar routing predicates. Use `is_hangul_jamo` as the routing check before
+`compose_hangul`. Every predicate requires all scalars to belong to its
+documented set and returns `False` for empty input:
 
 ```mojo
-from yomi import is_hangul_syllable, is_hiragana, is_kana, is_kanji, is_katakana
+from yomi import (
+    is_hangul_jamo,
+    is_hangul_syllable,
+    is_hiragana,
+    is_kana,
+    is_kanji,
+    is_katakana,
+)
 
 
-def main() raises:
+def main():
     print(is_hiragana("ひらがな"), is_katakana("カタカナ"))
     print(is_kana("らーメン"), is_kanji("札幌"), is_hangul_syllable("한국"))
+    print(is_hangul_jamo("ㅎㅏㄴ"))
 ```
 
 ## Mapping model
 
 Every mapping is an ordered pair of half-open UTF-8 byte ranges. Output ranges
 refer to the transformed text; source ranges refer to the original input. The
-representation owns copies of both texts and validates mapping bounds and UTF-8
-boundaries against them at construction. Accessors trust the validated value
-and are non-raising except where an operation validates new input, such as a
-mapping index or output match range. Mojo 1.0 does not enforce field privacy,
-so direct mutation of underscore-prefixed storage is out of contract;
+representation owns copies of both texts. Its public constructor validates
+mapping bounds and UTF-8 boundaries; library transforms establish the same
+invariants by construction. Accessors trust the validated value and are
+non-raising except where an operation validates new input, such as a mapping
+index or output match range. Mojo 1.0 does not enforce field privacy, so direct
+mutation of underscore-prefixed storage is out of contract;
 `validate()` provides an explicit checkpoint for unusual low-level work.
 `mapping_snapshot()` returns a detached list for efficient enumeration.
 `source_ranges_for_output()` projects a match to ordered exact source ranges,
@@ -195,6 +210,8 @@ The API is experimental and may change before v0.1.
 
 Yomi produces CJK phonetic representations while preserving exact mappings to
 original source ranges.
+
+Romaji-to-kana input conversion is out of scope for v0.1.
 
 The first implementation milestone is intentionally narrow: implement Hangul
 decomposition, choseong search, keyboard forms, kana romanization, and the

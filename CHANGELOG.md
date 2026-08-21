@@ -5,6 +5,14 @@ and uses semantic versioning after the first public release.
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** Rename `romanize_kana` to `to_romaji`, completing the
+  `to_romaji` / `to_hiragana` / `to_katakana` conversion family.
+- **Breaking:** Make kana conversion, Hangul composition and decomposition,
+  and choseong transforms non-raising; validating public representation and
+  mapping constructors remain raising.
+
 ### Added
 
 - Initial experimental repository scaffold.
@@ -21,9 +29,14 @@ and uses semantic versioning after the first public release.
   syllables with exact expansion mappings and NFC/NFD-equivalent output.
 - Add canonical Hangul composition with exact many-source-to-one-syllable
   mappings and an exhaustive 11,172-syllable round-trip oracle.
+- Accept compatibility Jamo U+3131--U+3163 in `compose_hangul`, including
+  vowel lookahead when a consonant could trail one syllable or lead the next.
+- Add `decompose_hangul_compatibility` for visible, keyboard-typable Jamo with
+  exact expansion mappings.
 - Add allocation-free Hiragana, Katakana, Kana, base-block Kanji, and modern
   precomposed Hangul routing predicates.
-- Add source-preserving `romanize_kana` with one documented ASCII
+- Add `is_hangul_jamo` for modern conjoining and compatibility Jamo routing.
+- Add source-preserving `to_romaji` with one documented ASCII
   wapuro-flavored modified Hepburn scheme, NFC/NFD voicing equivalence,
   exhaustive fixed-unit fixtures, and exact contextual kana mappings.
 - Add source-preserving `to_hiragana` and `to_katakana` conversion with

@@ -3,6 +3,11 @@
 from std.collections import List
 
 
+struct _Validated:
+    def __init__(out self):
+        pass
+
+
 struct SourceRange(Copyable):
     """One non-empty half-open byte range in original source text.
 
@@ -70,6 +75,40 @@ struct SourceMapping(Copyable):
         self._source_end = source_end
         self.validate()
 
+    @staticmethod
+    def _from_validated(
+        output_start: Int,
+        output_end: Int,
+        source_start: Int,
+        source_end: Int,
+    ) -> Self:
+        """Build a mapping without validation.
+
+        Package-internal callers guarantee non-empty, boundary-aligned ranges
+        produced by arithmetic that preserves the mapping invariants.
+        """
+        return Self(
+            output_start,
+            output_end,
+            source_start,
+            source_end,
+            _validated=_Validated(),
+        )
+
+    def __init__(
+        out self,
+        output_start: Int,
+        output_end: Int,
+        source_start: Int,
+        source_end: Int,
+        *,
+        _validated: _Validated,
+    ):
+        self._output_start = output_start
+        self._output_end = output_end
+        self._source_start = source_start
+        self._source_end = source_end
+
     def validate(self) raises:
         """Validate the stored output and source ranges explicitly."""
         if self._output_start < 0 or self._output_end <= self._output_start:
@@ -131,6 +170,31 @@ struct PhoneticRepresentation(Copyable):
         self._text = text^
         self._mappings = mappings^
         self.validate()
+
+    @staticmethod
+    def _from_validated(
+        var source: String,
+        var text: String,
+        var mappings: List[SourceMapping],
+    ) -> Self:
+        """Build a representation without validation.
+
+        Package-internal transforms guarantee owned UTF-8 text plus ordered,
+        gap-free, boundary-aligned mappings covering the transformed text.
+        """
+        return Self(source^, text^, mappings^, _validated=_Validated())
+
+    def __init__(
+        out self,
+        var source: String,
+        var text: String,
+        var mappings: List[SourceMapping],
+        *,
+        _validated: _Validated,
+    ):
+        self._source = source^
+        self._text = text^
+        self._mappings = mappings^
 
     def validate(self) raises:
         """Validate owned text and all stored mappings explicitly."""

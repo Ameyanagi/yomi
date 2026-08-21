@@ -13,6 +13,8 @@
 - Validate semantic invariants at construction and trust values on subsequent
   reads. Direct underscore-field mutation is out of contract; public
   `validate()` methods provide explicit checkpoints for unusual low-level work.
+- Keep transforms non-raising when every input is valid; package-private trusted
+  constructors carry invariants established by source-preserving arithmetic.
 - Preserve source mappings, numerical tolerances, ownership, and provenance as
   first-class data when the domain requires them.
 - Do not add a framework-wide array, executor, renderer, or application model.
@@ -32,10 +34,9 @@ The scanner first builds source-aware kana units, keeping table selection
 separate from the per-string walk so a future `Span` batch overload can reuse
 the semantics.
 
-Transformation names describe their direction. `romanize_kana` uses the
-verb-object form because it changes script into a representation.
-`to_hiragana` and `to_katakana` are explicit script converters; they are not
-romanization aliases and accept no width or romaji options.
+Transformation names describe their direction. `to_romaji`, `to_hiragana`, and
+`to_katakana` form one explicit conversion family. They accept no scheme,
+width, or romaji-input options.
 
 ## Out of scope
 

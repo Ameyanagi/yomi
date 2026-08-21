@@ -418,11 +418,11 @@ def _append_segment(
     mut transformed: String,
     mut mappings: List[SourceMapping],
     mut output_cursor: Int,
-) raises:
+):
     var output_length = text.byte_length()
     transformed += text
     mappings.append(
-        SourceMapping(
+        SourceMapping._from_validated(
             output_cursor,
             output_cursor + output_length,
             source_start,
@@ -432,7 +432,7 @@ def _append_segment(
     output_cursor += output_length
 
 
-def romanize_kana(text: StringSlice) raises -> PhoneticRepresentation:
+def to_romaji(text: StringSlice) -> PhoneticRepresentation:
     """Romanize kana with mixed mappings: contractions map a digraph pair or
     base-plus-combining mark to one romaji syllable, ordinary syllables map
     1:1, and unsupported grapheme clusters pass through unchanged.
@@ -440,8 +440,7 @@ def romanize_kana(text: StringSlice) raises -> PhoneticRepresentation:
     The single scheme is ASCII, wapuro-flavored modified Hepburn. Hiragana and
     full-width katakana share the same table; closed-list digraph detection is
     greedy. Sokuon, prolonged marks, and syllabic n use their documented
-    context rules. No input is invalid; ``raises`` is solely the checked
-    representation-construction path.
+    context rules. No input is invalid.
     """
     var source = String(text)
     var units = _scan_kana_units(source)
@@ -565,4 +564,4 @@ def romanize_kana(text: StringSlice) raises -> PhoneticRepresentation:
             last_vowel = None
         index += 1
 
-    return PhoneticRepresentation(source^, transformed^, mappings^)
+    return PhoneticRepresentation._from_validated(source^, transformed^, mappings^)
