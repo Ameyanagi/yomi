@@ -103,7 +103,12 @@ def main() raises:
 
     assert_equal(pinyin_full("北京大学").text(), "bei jing da xue")
     assert_equal(pinyin_joined("北京大学").text(), "beijingdaxue")
-    assert_equal(pinyin_initials("北京大学").text(), "bjdx")
+    var initials = pinyin_initials("北京大学")
+    assert_equal(initials.text(), "bjdx")
+    var initials_source = initials.source_ranges_for_output(0, 4)
+    assert_equal(len(initials_source), 1)
+    assert_equal(initials_source[0].start(), 0)
+    assert_equal(initials_source[0].end(), 12)
     var pinyin_alternatives = pinyin_representations("还没")
     assert_equal(len(pinyin_alternatives), 8)
     assert_equal(pinyin_alternatives[4].text(), "huanmei")

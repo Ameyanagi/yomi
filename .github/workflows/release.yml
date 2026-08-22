@@ -9,8 +9,21 @@ permissions:
   contents: read
 
 jobs:
+  release-metadata:
+    name: Validate release metadata
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Validate annotated tag and release metadata
+        run: |
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          bash scripts/check-release.sh "${GITHUB_REF_NAME}"
+
   check:
     name: Check ${{ matrix.name }}
+    needs: release-metadata
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -23,8 +36,8 @@ jobs:
           - name: macOS ARM64
             os: macos-14
     steps:
-      - uses: actions/checkout@v7
-      - uses: prefix-dev/setup-pixi@v0.10.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
         with:
           pixi-version: v0.76.2
           cache: true
@@ -40,17 +53,24 @@ jobs:
         include:
           - name: Linux x86-64
             os: ubuntu-24.04
+            subdir: linux-64
           - name: Linux ARM64
             os: ubuntu-24.04-arm
+            subdir: linux-aarch64
           - name: macOS ARM64
             os: macos-14
+            subdir: osx-arm64
     steps:
-      - uses: actions/checkout@v7
-      - uses: prefix-dev/setup-pixi@v0.10.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
         with:
           pixi-version: v0.76.2
           cache: true
       - run: pixi run --locked package
+      - name: Validate emitted package index
+        run: |
+          pixi_version=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' pixi.toml)
+          bash scripts/check-package.sh mojo-yomi "$pixi_version" "${{ matrix.subdir }}"
 
   publish:
     name: Publish source release
@@ -59,7 +79,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Build source archive
         run: >-
           git archive --format=tar.gz

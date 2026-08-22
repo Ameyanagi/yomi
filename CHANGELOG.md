@@ -1,9 +1,11 @@
 # Changelog
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
-and uses semantic versioning after the first public release.
+and uses semantic versioning for public releases.
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-08-22
 
 ### Changed
 
@@ -64,3 +66,6 @@ and uses semantic versioning after the first public release.
   output-match-to-source-range projection.
 - Gate source releases on full installed-package verification across the
   supported platform matrix.
+
+[Unreleased]: https://github.com/Ameyanagi/yomi/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Ameyanagi/yomi/releases/tag/v0.1.0
