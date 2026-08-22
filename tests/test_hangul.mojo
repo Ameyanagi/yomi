@@ -1,6 +1,10 @@
 from std.testing import TestSuite, assert_equal, assert_raises, assert_true
 
-from yomi import decompose_hangul
+from yomi import (
+    compose_hangul,
+    decompose_hangul,
+    decompose_hangul_compatibility,
+)
 
 
 comptime S_BASE = 0xAC00
@@ -25,6 +29,28 @@ def test_reference_lv_and_lvt_syllables() raises:
 
     var final = decompose_hangul("힣")
     assert_equal(final.text(), "힣")
+
+
+def test_compatibility_decomposition_is_visible_and_source_preserving() raises:
+    var representation = decompose_hangul_compatibility("한")
+    assert_equal(representation.source_text(), "한")
+    assert_equal(representation.text(), "ㅎㅏㄴ")
+    assert_equal(representation.mapping_count(), 3)
+
+    var mappings = representation.mapping_snapshot()
+    for index in range(3):
+        assert_equal(mappings[index].output_start(), index * 3)
+        assert_equal(mappings[index].output_end(), index * 3 + 3)
+        assert_equal(mappings[index].source_start(), 0)
+        assert_equal(mappings[index].source_end(), 3)
+
+
+def test_compatibility_decomposition_round_trips_through_compose() raises:
+    var original = String("한글")
+    var decomposed = decompose_hangul_compatibility(original)
+    assert_equal(decomposed.text(), "ㅎㅏㄴㄱㅡㄹ")
+    var recomposed = compose_hangul(decomposed.text())
+    assert_equal(recomposed.text(), original)
 
 
 def test_decomposition_preserves_mixed_graphemes_and_exact_mappings() raises:

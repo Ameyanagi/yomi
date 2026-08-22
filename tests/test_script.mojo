@@ -1,6 +1,13 @@
 from std.testing import TestSuite, assert_equal
 
-from yomi import is_hangul_syllable, is_hiragana, is_kana, is_kanji, is_katakana
+from yomi import (
+    is_hangul_jamo,
+    is_hangul_syllable,
+    is_hiragana,
+    is_kana,
+    is_kanji,
+    is_katakana,
+)
 
 
 def test_representative_pure_script_strings() raises:
@@ -15,6 +22,8 @@ def test_representative_pure_script_strings() raises:
     assert_equal(is_kana("らーメン"), True)
     assert_equal(is_kanji("漢字"), True)
     assert_equal(is_hangul_syllable("한국"), True)
+    assert_equal(is_hangul_jamo("한"), True)
+    assert_equal(is_hangul_jamo("ㅎㅏㄴ"), True)
 
     assert_equal(is_hiragana("らーメン"), False)
 
@@ -25,6 +34,7 @@ def test_empty_and_mixed_strings_are_rejected() raises:
     assert_equal(is_kana(""), False)
     assert_equal(is_kanji(""), False)
     assert_equal(is_hangul_syllable(""), False)
+    assert_equal(is_hangul_jamo(""), False)
 
     assert_equal(is_hiragana("かa"), False)
     assert_equal(is_katakana("カ漢"), False)
@@ -32,6 +42,7 @@ def test_empty_and_mixed_strings_are_rejected() raises:
     assert_equal(is_kana("カ漢"), False)
     assert_equal(is_kanji("漢a"), False)
     assert_equal(is_hangul_syllable("한a"), False)
+    assert_equal(is_hangul_jamo("ㅎa"), False)
 
 
 def test_hiragana_boundaries() raises:
@@ -82,6 +93,23 @@ def test_hangul_syllable_boundaries_and_jamo() raises:
     assert_equal(is_hangul_syllable(chr(0xABFF)), False)
     assert_equal(is_hangul_syllable(chr(0xD7A4)), False)
     assert_equal(is_hangul_syllable("가"), False)
+
+
+def test_hangul_jamo_boundaries_and_exclusions() raises:
+    for value in [0x1100, 0x1112, 0x1161, 0x1175, 0x11A8, 0x11C2, 0x3131, 0x3163]:
+        assert_equal(is_hangul_jamo(chr(value)), True)
+    for value in [
+        0x10FF,
+        0x1113,
+        0x1160,
+        0x1176,
+        0x11A7,
+        0x11C3,
+        0x3130,
+        0x3164,
+        0xAC00,
+    ]:
+        assert_equal(is_hangul_jamo(chr(value)), False)
 
 
 def main() raises:

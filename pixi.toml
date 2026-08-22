@@ -6,12 +6,14 @@ platforms = ["osx-arm64", "linux-64", "linux-aarch64"]
 version = "0.0.0"
 
 [tasks]
-check = { depends-on = ["format-check", "test", "precompile"], description = "Run the complete validation suite" }
-example = { cmd = "mojo run -I src examples/korean.mojo && mojo run -I src examples/japanese.mojo", description = "Run the Korean and Japanese source-mapping examples" }
+bench-search-keys = { cmd = "mojo run -I src benchmarks/bench_search_keys.mojo", description = "Benchmark profiled CJK search-key generation" }
+check = { depends-on = ["format-check", "readme-check", "test", "precompile"], description = "Run the complete validation suite" }
+example = { cmd = "mojo run -I src examples/korean.mojo && mojo run -I src examples/japanese.mojo && mojo run -I src examples/chinese.mojo", description = "Run the CJK source-mapping examples" }
 format = { cmd = "bash scripts/format.sh", description = "Format Mojo source files" }
 format-check = { cmd = "bash scripts/check-format.sh", description = "Verify Mojo formatting without modifying source" }
 package = { cmd = "rattler-build build --recipe conda.recipe/recipe.yaml -c conda-forge -c https://conda.modular.com/max -c https://repo.prefix.dev/modular-community", description = "Build the local Conda package" }
 precompile = { cmd = "mojo precompile --Werror --warn-on-unstable-apis src/yomi -o .pixi/yomi.mojoc", description = "Precompile the package with warnings as errors" }
+readme-check = { cmd = "bash scripts/check-readme.sh", description = "Compile README Mojo examples" }
 test = { cmd = "bash scripts/test.sh", description = "Run all Mojo TestSuite files" }
 
 [dependencies]

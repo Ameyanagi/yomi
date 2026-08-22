@@ -33,10 +33,11 @@ selection stay at explicit effect or backend boundaries.
 
 Public transformations return `PhoneticRepresentation`, not an untracked
 `String`. The value owns both original source and transformed text. Its ordered
-`SourceMapping` values relate half-open output UTF-8 byte ranges to half-open
-ranges in that owned source. Mapping spans cover the entire transformed output
-without gaps or overlaps. Source and output spans must be in bounds and end on
-UTF-8 code-point boundaries. Expansions and contractions are allowed; equal
+`SourceMapping` values relate half-open output UTF-8 byte ranges to optional
+half-open ranges in that owned source. Mapping spans cover the entire
+transformed output without gaps or overlaps. Mapped source and output spans
+must be in bounds and end on UTF-8 code-point boundaries. Generated separators
+may be explicitly unmapped. Expansions and contractions are allowed; equal
 output and source byte lengths are not assumed.
 
 Construction validates representation, mapping, and source-range invariants;
@@ -51,9 +52,10 @@ byte operations is outside the safe API contract.
 `mapping_snapshot()` is the enumeration boundary: it returns a detached mapping
 list without repeating construction-time validation. `source_ranges_for_output()`
 owns match projection policy. It binary-searches the output-ordered mappings,
-sorts overlaps by source byte position with the standard-library sort, and
-merges overlapping or touching spans. It returns separate spans across a gap so
-Yuragi never needs to reconstruct or accidentally broaden highlights.
+skips generated spans with no source text, sorts overlaps by source byte
+position with the standard-library sort, and merges overlapping or touching
+spans. It returns separate spans across a gap so Yuragi never needs to
+reconstruct or accidentally broaden highlights.
 
 Algorithms operate on extended grapheme clusters at the public text boundary.
 An algorithm may inspect scalar values within a cluster, but pass-through text
@@ -72,3 +74,35 @@ own ranges; this prevents a match on an extender from broadening to the base
 syllable. Already decomposed Jamo input passes through unchanged with one exact
 mapping per scalar, giving NFC and NFD input the same transformed text without
 requiring a normalization table.
+
+Korean finder representations recognize the same modern precomposed and
+canonical decomposed syllables directly during one grapheme scan. Joined and
+spaced Revised-Romanization-style keys and Dubeolsik keys append table tokens
+straight into the final string. One mapping per emitted syllable points to the
+complete source grapheme; spaces generated between adjacent romanized Hangul
+syllables use explicit unmapped output spans. Non-Hangul graphemes pass through
+without losing mixed path or label text.
+
+Chinese search representations scan source scalars, binary-search a generated
+fixed-width pinyin table, and retain exact byte offsets only for recognized
+readings. Full pinyin inserts explicit unmapped separators; joined pinyin and
+initials map one output span per recognized source scalar. Unlike script
+conversion, non-pinyin source text is intentionally omitted from these search
+keys. Common-polyphone generation mutates one selected reading at a time,
+deduplicates output text, and stops at the caller's explicit cap.
+
+Japanese finder representations normalize ASCII case and compatibility width,
+fold katakana and dash variants, and retain one exact mapping per contributing
+source grapheme. IME query parsing is a bounded longest-token scalar walk.
+Typed `SearchKeyKind` values separate candidate and query semantics, while
+`search_key_kinds_compatible` centralizes the Yuru-compatible scoring gate.
+Japanese candidate bundles enforce a six-key cap; breadth-first ambiguous
+query expansion enforces an eight-key cap and a bounded parser-state budget.
+The unified indexing bundle prepends required original/normalized keys and
+budgets generated keys at eight total entries and 1,024 bytes by default.
+Numeric query romanization runs before the ordinary parser, and parser-only
+ASCII edge trimming preserves the literal/normalized base variants.
+Algorithmic year/month keys reuse the normalized representation and emit a
+fixed maximum of six unique candidate values. Optional dictionary providers
+compose by appending separately licensed, capped, source-preserving values to
+that owned list; Yomi's core has no dictionary runtime dependency.

@@ -1,6 +1,7 @@
 # Data provenance
 
-No generated lookup data is currently committed.
+Yomi commits generated lookup data only when the installed Mojo package can
+consume it directly, without Python or another generator runtime.
 
 The kana romanization fixture in `tests/kana_fixture_data.mojo` is a manually
 maintained normative table rather than generated lookup data. It enumerates
@@ -19,6 +20,14 @@ Katakana block charts (retrieved 2026-08-20):
 No external romanization database is embedded. Romanization outputs are Yomi's
 documented wapuro-flavored modified Hepburn convention, and the tests walk the
 checked-in rows directly.
+
+Japanese search compatibility uses reviewed scalar ranges and literals only:
+full-width ASCII U+FF01..U+FF5E, half-width katakana U+FF61..U+FF9F,
+ideographic space U+3000, the documented dash set, the existing kana voicing
+table, and algorithmic integer readings from 1 through 9999. No normalization,
+IME, numeric, or Kanji dictionary data file is embedded. The exact built-in
+coverage and optional-provider requirements are documented in
+[`japanese-search.md`](japanese-search.md).
 
 The Hangul choseong and decomposition implementations are reviewed against
 **The Unicode Standard, Version 17.0.0**, Section 3.12.5, “Sample Code for
@@ -63,10 +72,62 @@ U+3146, U+3147, U+3148, U+3149, U+314A, U+314B, U+314C, U+314D, and U+314E.
 The authoritative block chart is
 <https://www.unicode.org/charts/PDF/U3130.pdf> (retrieved 2026-08-20).
 
+The deterministic Korean romanization and Dubeolsik tables are documented in
+[`korean-search.md`](korean-search.md). The romanization is a finder-oriented,
+syllable-local convention aligned with Yuru v1; it is not a claim of full
+phonological Revised Romanization. The keyboard table follows the standard
+Korean 2-set QWERTY positions and emits lowercased ASCII so shifted tense keys
+remain compatible with case-insensitive fuzzy matching. Reference-component
+tests exercise all 19 initial, 21 vowel, and 28 final entries, and an exhaustive
+walk validates source mappings for all 11,172 modern syllables.
+
 These reviewed constants and scalar literals implement an algorithm; no
-external lookup database or generated artifact is embedded. Unicode material
-is used under the Unicode Terms of Use:
+external lookup database is embedded for Hangul. Unicode material is used under
+the Unicode Terms of Use:
 <https://www.unicode.org/license.txt>.
+
+## Chinese pinyin data
+
+`src/yomi/chinese/_pinyin_data.mojo` is generated from mozillazg's
+`pinyin-data` **0.13.0** `pinyin.txt`:
+
+- canonical source:
+  <https://github.com/mozillazg/pinyin-data/blob/v0.13.0/pinyin.txt>;
+- raw source used by the generator:
+  <https://raw.githubusercontent.com/mozillazg/pinyin-data/v0.13.0/pinyin.txt>;
+- retrieved: 2026-08-22;
+- upstream Unihan data version: **Unicode 14.0.0**, dated 2021-08-06 in that
+  release's README;
+- upstream license: MIT, copyright © 2016 mozillazg; the canonical license is
+  <https://github.com/mozillazg/pinyin-data/blob/v0.13.0/LICENSE>, and its text
+  is retained in `LICENSES/pinyin-data-MIT.txt`;
+- source byte length: 920,298;
+- source SHA-256:
+  `b240322a1dbe7bb4abffb1889cdbbb3f124bc3242d27ea40a10f51596c41db50`;
+- generated artifact SHA-256:
+  `0920da508dfd92f381ab9940b5719d715bb317930b191f2b54a2ec98e798c0a0`.
+
+The generated table covers U+3007 IDEOGRAPHIC NUMBER ZERO and all 20,901
+assigned source rows in the ordinary BMP CJK Unified Ideographs range
+U+4E00..U+9FFF. It stores the source's deterministic first reading plus at most
+two distinct alternates, after applying the same tone-removal rules as the
+`pinyin` Rust crate used by Yuru. This intentionally targets normal searchable
+text; rare Extension A and supplementary-plane ideographs remain outside the
+current compact table.
+
+Generation is deterministic, sorted by scalar value, fixed-width, and uses only
+the Python standard library. Given a downloaded source file, regenerate and
+verify the checked-in artifact with:
+
+```sh
+pixi run python3 scripts/generate_pinyin_data.py /tmp/pinyin.txt
+pixi run python3 scripts/generate_pinyin_data.py /tmp/pinyin.txt --check
+```
+
+The generator rejects any source whose SHA-256 differs, rejects duplicate
+scalars or oversized fields, and `--check` performs a byte-for-byte comparison.
+Review a version update for primary-reading order, new romanization symbols,
+Unicode coverage, and license changes before updating the pinned metadata.
 
 Every future generated artifact must record:
 

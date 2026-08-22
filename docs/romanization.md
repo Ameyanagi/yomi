@@ -3,6 +3,8 @@
 Yomi implements one scheme: **ASCII wapuro-flavored modified Hepburn**. It is
 deterministic and intended for source-preserving fuzzy matching, not for
 linguistic analysis or reversible transliteration. There are no options.
+The public `to_romaji` transform applies this scheme to kana and passes every
+unsupported grapheme through unchanged.
 
 The scheme has two deliberate deviations from strict modified Hepburn:
 

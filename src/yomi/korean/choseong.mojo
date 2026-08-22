@@ -4,6 +4,7 @@ from std.collections import List
 
 from ..representation import PhoneticRepresentation, SourceMapping
 from .hangul import (
+    _compatibility_choseong,
     _first_codepoint,
     _is_modern_leading_jamo,
     _is_modern_syllable,
@@ -11,47 +12,7 @@ from .hangul import (
 )
 
 
-def _compatibility_choseong(index: Int) -> String:
-    if index == 0:
-        return "ㄱ"
-    if index == 1:
-        return "ㄲ"
-    if index == 2:
-        return "ㄴ"
-    if index == 3:
-        return "ㄷ"
-    if index == 4:
-        return "ㄸ"
-    if index == 5:
-        return "ㄹ"
-    if index == 6:
-        return "ㅁ"
-    if index == 7:
-        return "ㅂ"
-    if index == 8:
-        return "ㅃ"
-    if index == 9:
-        return "ㅅ"
-    if index == 10:
-        return "ㅆ"
-    if index == 11:
-        return "ㅇ"
-    if index == 12:
-        return "ㅈ"
-    if index == 13:
-        return "ㅉ"
-    if index == 14:
-        return "ㅊ"
-    if index == 15:
-        return "ㅋ"
-    if index == 16:
-        return "ㅌ"
-    if index == 17:
-        return "ㅍ"
-    return "ㅎ"
-
-
-def hangul_choseong(text: StringSlice) raises -> PhoneticRepresentation:
+def hangul_choseong(text: StringSlice) -> PhoneticRepresentation:
     """Convert precomposed Hangul syllables to compatibility choseong.
 
     A grapheme whose first code point is a modern precomposed Hangul syllable
@@ -78,7 +39,7 @@ def hangul_choseong(text: StringSlice) raises -> PhoneticRepresentation:
         var output_length = emitted.byte_length()
         transformed += emitted
         mappings.append(
-            SourceMapping(
+            SourceMapping._from_validated(
                 output_cursor,
                 output_cursor + output_length,
                 source_cursor,
@@ -88,4 +49,4 @@ def hangul_choseong(text: StringSlice) raises -> PhoneticRepresentation:
         output_cursor += output_length
         source_cursor += source_length
 
-    return PhoneticRepresentation(source^, transformed^, mappings^)
+    return PhoneticRepresentation._from_validated(source^, transformed^, mappings^)
