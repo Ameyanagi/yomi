@@ -77,6 +77,7 @@ for section in build host run; do
   recipe_pin=$(
     awk -v target="$section" '
       $0 == "  " target ":" { in_section = 1; next }
+      in_section && /^[^[:space:]]/ { exit }
       in_section && /^  [[:alnum:]_-]+:$/ { exit }
       in_section && /^    - mojo-compiler / {
         sub(/^    - mojo-compiler /, "")
