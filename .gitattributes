@@ -1,6 +1,1 @@
-* text=auto eol=lf
-*.mojo text eol=lf linguist-language=Mojo
-*.md text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
-*.sh text eol=lf
+src/yomi/chinese/_pinyin_data.mojo -whitespace

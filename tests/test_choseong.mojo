@@ -3,6 +3,7 @@ from std.testing import (
     TestSuite,
     assert_equal,
     assert_raises,
+    assert_true,
 )
 from yomi import PhoneticRepresentation, SourceMapping, SourceRange, hangul_choseong
 
@@ -175,6 +176,26 @@ def test_source_mapping_rejects_empty_or_negative_ranges() raises:
         )
     ):
         _ = SourceMapping(0, 1, 0, 0)
+
+
+def test_unmapped_output_is_explicit_and_projection_skips_it() raises:
+    var mappings = List[SourceMapping]()
+    mappings.append(SourceMapping(0, 1, 0, 1))
+    mappings.append(SourceMapping.unmapped(1, 2))
+    mappings.append(SourceMapping(2, 3, 1, 2))
+    var representation = PhoneticRepresentation("AB", "a b", mappings^)
+
+    assert_true(representation.mapping(0).has_source())
+    assert_true(not representation.mapping(1).has_source())
+    assert_equal(representation.mapping(1).source_start(), -1)
+    assert_equal(representation.mapping(1).source_end(), -1)
+
+    var separator = representation.source_ranges_for_output(1, 2)
+    assert_equal(len(separator), 0)
+    var whole = representation.source_ranges_for_output(0, 3)
+    assert_equal(len(whole), 1)
+    assert_equal(whole[0].start(), 0)
+    assert_equal(whole[0].end(), 2)
 
 
 def test_representation_rejects_uncovered_output() raises:

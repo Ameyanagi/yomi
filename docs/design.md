@@ -38,6 +38,45 @@ Transformation names describe their direction. `to_romaji`, `to_hiragana`, and
 `to_katakana` form one explicit conversion family. They accept no scheme,
 width, or romaji-input options.
 
+Korean search keys follow the same explicit-transform rule. Joined and spaced
+romanization are separate `romanize_hangul` and `romanize_hangul_spaced`
+functions, while `hangul_keyboard` names the Dubeolsik representation.
+`hangul_choseong` remains the initials view. There is no public mode enum or
+boolean combination to misconfigure.
+
+The Hangul scanner performs one grapheme walk per requested representation and
+appends directly into its final output and mapping buffers. The table dispatch
+is branch-heavy Unicode control flow over variable-length outputs, not a
+credible SIMD target. SIMD is reserved for measured fixed-width batch kernels;
+it is not part of these scalar text APIs.
+
+Chinese primary forms follow the same explicit-transform rule through
+`pinyin_full`, `pinyin_joined`, and `pinyin_initials`. The one configurable
+operation, `pinyin_representations`, uses a nominal `ChinesePolyphoneMode` and
+an explicit output cap. Its generated table is fixed-width and scalar-sorted,
+so lookup is binary search without table materialization. UTF-8 extraction and
+polyphone substitution are branch-heavy and variable-length; they are not a
+credible SIMD target. The cap prevents combinatorial alternatives, and the
+common mode substitutes only one source scalar at a time.
+
+Japanese finder forms use `japanese_kana_key`, `japanese_romaji_key`, and
+`japanese_query_kana`; typed `japanese_search_keys` and `japanese_query_keys`
+bundles add explicit compatibility kinds, capped ambiguity, reviewed
+long-vowel and numeric query guesses, and algorithmic year/month readings.
+`japanese_candidate_keys` combines required original/normalized keys and
+generated keys behind one eight-key/1,024-byte default budget. Generated-only
+candidate bundles are capped at six and query keys at eight.
+`search_key_kinds_compatible` owns the
+Yuru-aligned query/candidate gate. The bundles normalize compatibility width
+once; the base normalizer documents a narrow supported subset rather than
+claiming NFKC. Kind metadata carries the checked-in Yuru default score weights
+without complicating constructors. Their UTF-8, IME-token, and variable-length emission paths are
+branch-heavy and deliberately scalar.
+Kanji dictionary keys compose at the returned-list seam only after a licensed,
+versioned provider establishes tokenizer, ambiguity, unknown-word, cap, and
+exact source-mapping contracts.
+
 ## Out of scope
 
-Fuzzy scoring, terminal UI, filesystem traversal, and full Japanese morphology are outside the initial package.
+Fuzzy scoring, terminal UI, filesystem traversal, and built-in full Japanese
+morphology are outside the initial package.

@@ -33,6 +33,11 @@ and uses semantic versioning after the first public release.
   vowel lookahead when a consonant could trail one syllable or lead the next.
 - Add `decompose_hangul_compatibility` for visible, keyboard-typable Jamo with
   exact expansion mappings.
+- Add joined and spaced deterministic Hangul romanization plus Dubeolsik
+  keyboard representations with NFC/NFD equivalence and exhaustive modern
+  syllable mapping coverage.
+- Add explicit unmapped output spans for generated separators and ignore them
+  during output-to-source projection.
 - Add allocation-free Hiragana, Katakana, Kana, base-block Kanji, and modern
   precomposed Hangul routing predicates.
 - Add `is_hangul_jamo` for modern conjoining and compatibility Jamo routing.
@@ -41,6 +46,20 @@ and uses semantic versioning after the first public release.
   exhaustive fixed-unit fixtures, and exact contextual kana mappings.
 - Add source-preserving `to_hiragana` and `to_katakana` conversion with
   NFC-canonicalized kana voicing contractions and exact pass-through mappings.
+- Add Yuru-compatible Japanese kana/romaji finder keys, common IME query
+  aliases, and fixed algorithmic Arabic-numeral year/month representations.
+- Add typed search-key bundles and Yuru-compatible query/candidate gates, plus
+  strictly capped Japanese ambiguity and long-vowel query fanout with exact
+  source-byte mappings.
+- Add one budgeted `korean_candidate_keys` front door for original,
+  romanized, choseong, and Dubeolsik finder keys.
+- Add a compiled, profiler-oriented CJK key benchmark and remove measured
+  Japanese deduplication and scan-buffer allocation overhead.
+- Add learned-alias kind coverage, checked-in Yuru weight metadata, a unified
+  budgeted Japanese candidate bundle, parser-edge trimming, and numeric query
+  readings before ordinary romaji expansion.
+- Document the licensed optional-provider gate for Kanji dictionary readings
+  instead of embedding an unlicensed or incomplete dictionary.
 - Split the public examples into Korean and Japanese finder tasks with exact
   output-match-to-source-range projection.
 - Gate source releases on full installed-package verification across the

@@ -1,7 +1,23 @@
-from yomi import compose_hangul, decompose_hangul, hangul_choseong
+from yomi import (
+    compose_hangul,
+    decompose_hangul,
+    hangul_choseong,
+    hangul_keyboard,
+    korean_candidate_keys,
+    romanize_hangul,
+    romanize_hangul_spaced,
+)
 
 
 def main() raises:
+    var keys = korean_candidate_keys("서울")
+    for index in range(keys.count()):
+        print("candidate key", keys.key(index).text())
+
+    print("joined romanization", romanize_hangul("한글").text())
+    print("spaced romanization", romanize_hangul_spaced("한글").text())
+    print("Dubeolsik", hangul_keyboard("한글").text())
+
     var representation = hangul_choseong("한국 notes")
     print(representation.text())
 
@@ -39,3 +55,11 @@ def main() raises:
     for index in range(len(source_ranges)):
         var source_range = source_ranges[index].copy()
         print("choseong match -> source", source_range.start(), source_range.end())
+
+    var spaced = romanize_hangul_spaced("한글")
+    var romanized_ranges = spaced.source_ranges_for_output(4, 8)
+    print(
+        "geul match -> source",
+        romanized_ranges[0].start(),
+        romanized_ranges[0].end(),
+    )
