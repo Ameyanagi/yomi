@@ -67,9 +67,9 @@ if ! grep -qx 'mojo = "==1\.0\.0"' pixi.toml; then
 fi
 
 recipe_compiler_lines=$(grep -Ec '^    - mojo-compiler ' conda.recipe/recipe.yaml || true)
-exact_recipe_pins=$(grep -Ec '^    - mojo-compiler =1\.0\.0$' conda.recipe/recipe.yaml || true)
+exact_recipe_pins=$(grep -Ec '^    - mojo-compiler ==1\.0\.0$' conda.recipe/recipe.yaml || true)
 if [[ "$recipe_compiler_lines" -ne 3 || "$exact_recipe_pins" -ne 3 ]]; then
-  echo "recipe must contain exactly three mojo-compiler =1.0.0 requirements" >&2
+  echo "recipe must contain exactly three mojo-compiler ==1.0.0 requirements" >&2
   exit 1
 fi
 
@@ -84,8 +84,8 @@ for section in build host run; do
       }
     ' conda.recipe/recipe.yaml
   )
-  if [[ "$recipe_pin" != "=1.0.0" ]]; then
-    echo "recipe $section requirement must be exactly mojo-compiler =1.0.0" >&2
+  if [[ "$recipe_pin" != "==1.0.0" ]]; then
+    echo "recipe $section requirement must be exactly mojo-compiler ==1.0.0" >&2
     exit 1
   fi
 done

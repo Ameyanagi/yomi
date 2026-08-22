@@ -34,7 +34,7 @@ jq -e \
       and .version == $version
       and .subdir == $subdir
       and .build_number == 0
-      and .depends == ["mojo-compiler 1.0.0.*"]' \
+      and .depends == ["mojo-compiler ==1.0.0"]' \
   <<<"$package_index" >/dev/null
 
 printf 'validated %s\n' "${artifacts[0]}"
