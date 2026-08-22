@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -41,13 +42,13 @@ jobs:
         with:
           pixi-version: v0.76.2
           cache: true
-      - name: Verify package version
+      - name: Verify release metadata
         run: |
           pixi_version=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' pixi.toml)
-          recipe_version=$(sed -n 's/^  version: "\([^"]*\)"$/\1/p' conda.recipe/recipe.yaml)
-          if [[ -z "$pixi_version" || -z "$recipe_version" || "$pixi_version" != "$recipe_version" ]]; then
-            echo "pixi.toml version '$pixi_version' does not match recipe version '$recipe_version'" >&2
-            exit 1
-          fi
+          bash scripts/check-release.sh --metadata-only "v${pixi_version}"
       - name: Build package
         run: pixi run --locked package
+      - name: Validate emitted package index
+        run: |
+          pixi_version=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' pixi.toml)
+          bash scripts/check-package.sh mojo-yomi "$pixi_version" linux-64

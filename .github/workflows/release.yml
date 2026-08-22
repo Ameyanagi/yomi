@@ -53,10 +53,13 @@ jobs:
         include:
           - name: Linux x86-64
             os: ubuntu-24.04
+            subdir: linux-64
           - name: Linux ARM64
             os: ubuntu-24.04-arm
+            subdir: linux-aarch64
           - name: macOS ARM64
             os: macos-14
+            subdir: osx-arm64
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
@@ -64,6 +67,10 @@ jobs:
           pixi-version: v0.76.2
           cache: true
       - run: pixi run --locked package
+      - name: Validate emitted package index
+        run: |
+          pixi_version=$(sed -n 's/^version = "\([^"]*\)"$/\1/p' pixi.toml)
+          bash scripts/check-package.sh mojo-yomi "$pixi_version" "${{ matrix.subdir }}"
 
   publish:
     name: Publish source release

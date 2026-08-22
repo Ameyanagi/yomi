@@ -6,11 +6,14 @@ CJK phonetic representations and readings for Mojo.
 
 ## Install
 
-In a [Pixi](https://pixi.sh/) project, add the hosted Mojo ecosystem channel
-and install the Conda package:
+In a [Pixi](https://pixi.sh/) project, add the hosted Mojo ecosystem, Modular
+`max`, and conda-forge channels, then install the Conda package:
 
 ```sh
-pixi project channel add https://ameyanagi.github.io/mojo-channel
+pixi project channel add \
+  https://ameyanagi.github.io/mojo-channel \
+  https://conda.modular.com/max \
+  conda-forge
 pixi add mojo-yomi
 ```
 
@@ -320,7 +323,7 @@ provides an explicit checkpoint for unusual low-level work.
 `source_ranges_for_output()` projects a match to ordered exact source ranges,
 ignoring unmapped separators, merging only overlapping or touching ranges, and
 never bridging a source gap.
-The API is experimental and may change before v0.1.
+The API is experimental and may change across 0.x releases.
 
 ## Scope
 

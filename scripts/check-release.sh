@@ -52,7 +52,11 @@ if [[ "$pixi_version" != "$version" || "$recipe_version" != "$version" ]]; then
   exit 1
 fi
 
-if ! grep -Eq "^## \[$version\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" CHANGELOG.md; then
+escaped_version=${version//./\\.}
+changelog_dates=$(
+  sed -nE "s/^## \\[$escaped_version\\] - ([0-9]{4}-[0-9]{2}-[0-9]{2})$/\\1/p" CHANGELOG.md
+)
+if [[ ! "$changelog_dates" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
   echo "CHANGELOG.md needs a dated [$version] release heading" >&2
   exit 1
 fi
@@ -62,10 +66,28 @@ if ! grep -qx 'mojo = "==1\.0\.0"' pixi.toml; then
   exit 1
 fi
 
-recipe_compiler_pins="$(grep -Ec '^    - mojo-compiler =1\.0\.0$' conda.recipe/recipe.yaml || true)"
-if [[ "$recipe_compiler_pins" -ne 3 ]]; then
-  echo "the recipe must exactly pin mojo-compiler 1.0.0 for build, host, and run" >&2
+recipe_compiler_lines=$(grep -Ec '^    - mojo-compiler ' conda.recipe/recipe.yaml || true)
+exact_recipe_pins=$(grep -Ec '^    - mojo-compiler =1\.0\.0$' conda.recipe/recipe.yaml || true)
+if [[ "$recipe_compiler_lines" -ne 3 || "$exact_recipe_pins" -ne 3 ]]; then
+  echo "recipe must contain exactly three mojo-compiler =1.0.0 requirements" >&2
   exit 1
 fi
+
+for section in build host run; do
+  recipe_pin=$(
+    awk -v target="$section" '
+      $0 == "  " target ":" { in_section = 1; next }
+      in_section && /^  [[:alnum:]_-]+:$/ { exit }
+      in_section && /^    - mojo-compiler / {
+        sub(/^    - mojo-compiler /, "")
+        print
+      }
+    ' conda.recipe/recipe.yaml
+  )
+  if [[ "$recipe_pin" != "=1.0.0" ]]; then
+    echo "recipe $section requirement must be exactly mojo-compiler =1.0.0" >&2
+    exit 1
+  fi
+done
 
 echo "release metadata for $tag is consistent"
