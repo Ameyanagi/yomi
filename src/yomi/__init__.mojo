@@ -2,6 +2,8 @@
 
 from .chinese import (
     ChinesePolyphoneMode,
+    chinese_candidate_keys,
+    chinese_query_keys,
     pinyin_full,
     pinyin_initials,
     pinyin_joined,

@@ -1,5 +1,28 @@
 # Chinese search keys
 
+`chinese_candidate_keys(source)` is the normal indexing front door. It returns
+a typed `SearchKeyBundle` in stable order: required `ORIGINAL`, then
+`CHINESE_PINYIN_FULL`, `CHINESE_PINYIN_JOINED`, and
+`CHINESE_PINYIN_INITIALS` for each reading sequence. Duplicate `(kind, text)`
+pairs are removed, so a one-character full and joined spelling remain distinct
+typed keys while repeated initials do not. `max_count` is constrained to
+`[0, 8]`; `max_total_key_bytes` bounds generated key text while leaving the
+original available. With the default total cap, `还没` ends at `haimo`; callers
+that use the lower-level eight-representation API additionally receive
+`fu mei` because that list does not include an original key.
+
+`chinese_query_keys(source)` returns at most three query variants: literal
+`QUERY_ORIGINAL`, a changed case/width/dash-folded `QUERY_NORMALIZED`, then
+`QUERY_INITIALS` for normalized lowercase ASCII alphabetic queries longer than
+one byte. It deduplicates by key-kind coverage: an extra same-text
+`QUERY_CHINESE_PINYIN` would add no coverage because the literal or normalized
+kind already targets full and joined pinyin. The initials text shares a
+1,024-byte default generated budget.
+
+Both front doors enforce their caps while generating values, before matching.
+`take_keys()` and `take_representation()` transfer their owned storage to a
+consumer without constructing detached copies.
+
 Yomi exposes three explicit primary-reading transformations:
 
 - `pinyin_full(source)` emits space-separated syllables;
@@ -20,7 +43,7 @@ the owned source text.
 
 ## Common polyphones
 
-`pinyin_representations(source, max_count=8)` returns a capped flat list of
+The lower-level `pinyin_representations(source, max_count=8)` returns a capped flat list of
 search representations. It first emits primary full, joined, and initials
 forms. In `ChinesePolyphoneMode.COMMON`, it then substitutes one character at a
 time, ordered by alternate-reading index and source position, and emits that
@@ -31,7 +54,9 @@ This is the same bounded mechanism as Yuru: `还没` begins with `hai mei`,
 `haimei`, and `hm`, then adds common forms including `huan mei`, `huanmei`,
 `hai mo`, and `haimo`. With the default cap, the eighth key is `fu mei`.
 `ChinesePolyphoneMode.NONE` returns only the three primary forms. A cap of zero
-returns no values; a negative cap is invalid.
+returns no values; a negative cap is invalid. Mode values are validated even
+when the cap is zero, so corrupted nominal storage never silently selects a
+fallback behavior.
 
 The common city name `重庆` has the same small phrase exception as Yuru and uses
 `chong qing`, `chongqing`, and `cq` instead of the isolated primary reading of

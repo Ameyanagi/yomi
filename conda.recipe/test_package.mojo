@@ -2,6 +2,8 @@ from std.testing import assert_equal
 
 from yomi import (
     SearchKeyKind,
+    chinese_candidate_keys,
+    chinese_query_keys,
     compose_hangul,
     decompose_hangul,
     decompose_hangul_compatibility,
@@ -50,10 +52,11 @@ def main() raises:
     assert_equal(len(generated_space), 0)
     assert_equal(hangul_keyboard("한글").text(), "gksrmf")
     var korean_keys = korean_candidate_keys("서울")
-    assert_equal(korean_keys.count(), 4)
+    assert_equal(korean_keys.count(), 5)
     assert_equal(korean_keys.key(1).text(), "seoul")
-    assert_equal(korean_keys.key(2).text(), "ㅅㅇ")
-    assert_equal(korean_keys.key(3).text(), "tjdnf")
+    assert_equal(korean_keys.key(2).text(), "seo ul")
+    assert_equal(korean_keys.key(3).text(), "ㅅㅇ")
+    assert_equal(korean_keys.key(4).text(), "tjdnf")
 
     var hangul = decompose_hangul("각")
     assert_equal(hangul.source_text(), "각")
@@ -112,3 +115,21 @@ def main() raises:
     var pinyin_alternatives = pinyin_representations("还没")
     assert_equal(len(pinyin_alternatives), 8)
     assert_equal(pinyin_alternatives[4].text(), "huanmei")
+    var chinese_keys = chinese_candidate_keys("北京大学")
+    assert_equal(chinese_keys.key(0).text(), "北京大学")
+    assert_equal(chinese_keys.key(3).text(), "bjdx")
+    assert_equal(
+        chinese_keys.key(3).kind() == SearchKeyKind.CHINESE_PINYIN_INITIALS, True
+    )
+    var common_chinese_keys = chinese_candidate_keys("还没")
+    assert_equal(common_chinese_keys.count(), 8)
+    assert_equal(common_chinese_keys.key(7).text(), "haimo")
+    var chinese_queries = chinese_query_keys("ＢＪＤＸ")
+    assert_equal(chinese_queries.count(), 3)
+    assert_equal(chinese_queries.key(2).text(), "bjdx")
+    assert_equal(chinese_queries.key(2).kind() == SearchKeyKind.QUERY_INITIALS, True)
+
+    var moved_bundle = chinese_candidate_keys("中", 4)
+    var moved_keys = moved_bundle^.take_keys()
+    var moved_key = moved_keys.pop(0)
+    assert_equal(moved_key^.take_representation().text(), "中")

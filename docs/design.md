@@ -51,13 +51,16 @@ credible SIMD target. SIMD is reserved for measured fixed-width batch kernels;
 it is not part of these scalar text APIs.
 
 Chinese primary forms follow the same explicit-transform rule through
-`pinyin_full`, `pinyin_joined`, and `pinyin_initials`. The one configurable
-operation, `pinyin_representations`, uses a nominal `ChinesePolyphoneMode` and
-an explicit output cap. Its generated table is fixed-width and scalar-sorted,
-so lookup is binary search without table materialization. UTF-8 extraction and
-polyphone substitution are branch-heavy and variable-length; they are not a
-credible SIMD target. The cap prevents combinatorial alternatives, and the
-common mode substitutes only one source scalar at a time.
+`pinyin_full`, `pinyin_joined`, and `pinyin_initials`.
+`chinese_candidate_keys` combines those forms with the required original under
+one eight-key/1,024-byte default, while `chinese_query_keys` emits at most three
+coverage-distinct typed query views. `ChinesePolyphoneMode` is a validated
+total nominal value and controls only bounded
+one-source-scalar substitutions. The generated table is fixed-width and
+scalar-sorted, so lookup is binary search without table materialization. UTF-8
+extraction and polyphone substitution are branch-heavy and variable-length;
+they are not a credible SIMD target. Count and byte caps prevent combinatorial
+or allocation growth.
 
 Japanese finder forms use `japanese_kana_key`, `japanese_romaji_key`, and
 `japanese_query_kana`; typed `japanese_search_keys` and `japanese_query_keys`

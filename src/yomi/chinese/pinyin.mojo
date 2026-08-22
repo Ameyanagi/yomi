@@ -1,8 +1,10 @@
 """Deterministic pinyin representations for Chinese search."""
 
 from std.collections import List
+from std.io import Writable, Writer
 
 from ..representation import PhoneticRepresentation, SourceMapping
+from ..search_key import SearchKey, SearchKeyBundle, SearchKeyKind
 from ._pinyin_data import (
     _PINYIN_RECORD_BYTES,
     _PINYIN_RECORD_COUNT,
@@ -15,8 +17,12 @@ comptime _JOINED = 1
 comptime _INITIALS = 2
 
 
-struct ChinesePolyphoneMode(Copyable, Equatable, ImplicitlyCopyable):
-    """Control common single-character alternate pinyin readings."""
+struct ChinesePolyphoneMode(Copyable, Equatable, ImplicitlyCopyable, Writable):
+    """Control common single-character alternate pinyin readings.
+
+    Direct mutation of ``_value`` is out of contract; use ``validate()`` for
+    an explicit checkpoint after unusual low-level mutation.
+    """
 
     var _value: Int
 
@@ -28,6 +34,28 @@ struct ChinesePolyphoneMode(Copyable, Equatable, ImplicitlyCopyable):
 
     def __eq__(self, other: Self) -> Bool:
         return self._value == other._value
+
+    def validate(self) raises:
+        """Raise if unusual direct field mutation broke the mode invariant."""
+        if self != Self.NONE and self != Self.COMMON:
+            raise Error(
+                "ChinesePolyphoneMode _value must be 0 (NONE) or 1 (COMMON); "
+                "got _value="
+                + String(self._value)
+            )
+
+    def __str__(self) -> String:
+        var result = String()
+        self.write_to(result)
+        return result^
+
+    def write_to[W: Writer](self, mut writer: W):
+        if self == Self.NONE:
+            writer.write("NONE")
+        elif self == Self.COMMON:
+            writer.write("COMMON")
+        else:
+            writer.write("INVALID(_value=", self._value, ")")
 
 
 struct _PinyinUnit(Copyable):
@@ -47,6 +75,20 @@ struct _PinyinUnit(Copyable):
         self._readings = readings^
         self._source_start = source_start
         self._source_end = source_end
+
+
+struct _BoundedPinyinScan:
+    var _units: List[_PinyinUnit]
+    var _exceeded: Bool
+
+    def __init__(out self, var units: List[_PinyinUnit], exceeded: Bool):
+        self._units = units^
+        self._exceeded = exceeded
+
+    def take_units(mut self) -> List[_PinyinUnit]:
+        var units = List[_PinyinUnit]()
+        swap(units, self._units)
+        return units^
 
 
 def _hex_digit(value: Int) -> Int:
@@ -124,6 +166,38 @@ def _scan_units(source: StringSlice, max_readings: Int) -> List[_PinyinUnit]:
 
     _apply_chongqing_primary(units)
     return units^
+
+
+def _scan_units_bounded(
+    source: StringSlice,
+    max_readings: Int,
+    max_mapped_units: Int,
+) -> _BoundedPinyinScan:
+    """Scan only while at least one generated key can still fit its budget."""
+    var units = List[_PinyinUnit](capacity=min(source.byte_length(), max_mapped_units))
+    var source_cursor = 0
+    for code_point_slice in source.codepoint_slices():
+        var source_end = source_cursor + code_point_slice.byte_length()
+        var code_point = _first_code_point(code_point_slice)
+        var readings = _lookup_readings(code_point, max_readings)
+        if len(readings) > 0:
+            # Every pinyin unit contributes at least one ASCII initial byte to
+            # every sequence. Once this bound is crossed, no generated form
+            # can fit and scanning the rest of an adversarial label is wasted.
+            if len(units) >= max_mapped_units:
+                return _BoundedPinyinScan(units^, True)
+            units.append(
+                _PinyinUnit(
+                    code_point,
+                    readings^,
+                    source_cursor,
+                    source_end,
+                )
+            )
+        source_cursor = source_end
+
+    _apply_chongqing_primary(units)
+    return _BoundedPinyinScan(units^, False)
 
 
 def _single_reading(value: StringSlice) -> List[String]:
@@ -237,7 +311,164 @@ def _build_representation(
                 mappings,
                 output_cursor,
             )
-    return PhoneticRepresentation(String(source), output^, mappings^)
+    return PhoneticRepresentation._from_validated(String(source), output^, mappings^)
+
+
+def _form_byte_length(selected: List[String], form: Int) -> Int:
+    if form == _INITIALS:
+        # Checked-in pinyin readings are lowercase ASCII and nonempty.
+        return len(selected)
+    var result = 0
+    for index in range(len(selected)):
+        result += selected[index].byte_length()
+    if form == _FULL and len(selected) > 0:
+        result += len(selected) - 1
+    return result
+
+
+def _kind_for_form(form: Int) -> SearchKeyKind:
+    if form == _FULL:
+        return SearchKeyKind.CHINESE_PINYIN_FULL
+    if form == _JOINED:
+        return SearchKeyKind.CHINESE_PINYIN_JOINED
+    return SearchKeyKind.CHINESE_PINYIN_INITIALS
+
+
+def _push_unique_typed_form(
+    source: StringSlice,
+    units: List[_PinyinUnit],
+    selected: List[String],
+    form: Int,
+    mut output: List[SearchKey],
+    max_count: Int,
+    max_total_key_bytes: Int,
+    mut generated_bytes: Int,
+) raises:
+    if len(output) >= max_count:
+        return
+    var byte_count = _form_byte_length(selected, form)
+    if generated_bytes + byte_count > max_total_key_bytes:
+        return
+
+    var kind = _kind_for_form(form)
+    var representation = _build_representation(source, units, selected, form)
+    for index in range(len(output)):
+        if output[index].kind() == kind and output[index].has_representation_text(
+            representation
+        ):
+            return
+    generated_bytes += byte_count
+    output.append(SearchKey(kind, representation^))
+
+
+def _push_typed_sequence(
+    source: StringSlice,
+    units: List[_PinyinUnit],
+    selected: List[String],
+    mut output: List[SearchKey],
+    max_count: Int,
+    max_total_key_bytes: Int,
+    mut generated_bytes: Int,
+) raises:
+    for form in [_FULL, _JOINED, _INITIALS]:
+        if len(output) >= max_count:
+            return
+        _push_unique_typed_form(
+            source,
+            units,
+            selected,
+            form,
+            output,
+            max_count,
+            max_total_key_bytes,
+            generated_bytes,
+        )
+
+
+def _identity_representation(source: StringSlice) raises -> PhoneticRepresentation:
+    var owned = String(source)
+    var mappings = List[SourceMapping](capacity=source.byte_length())
+    var cursor = 0
+    for scalar in StringSlice(owned).codepoint_slices():
+        var end = cursor + scalar.byte_length()
+        mappings.append(SourceMapping(cursor, end, cursor, end))
+        cursor = end
+    return PhoneticRepresentation._from_validated(owned.copy(), owned^, mappings^)
+
+
+def _normalized_query_scalar(value: Int) -> String:
+    var normalized = value
+    if normalized >= 0xFF01 and normalized <= 0xFF5E:
+        normalized -= 0xFEE0
+    if normalized >= 0x41 and normalized <= 0x5A:
+        normalized += 0x20
+    if normalized == 0x3000:
+        return " "
+    if (
+        normalized == 0x002D
+        or (normalized >= 0x2010 and normalized <= 0x2015)
+        or normalized == 0x2212
+        or normalized == 0x30A0
+        or normalized == 0x30FC
+        or normalized == 0xFE58
+        or normalized == 0xFE63
+        or normalized == 0xFF0D
+        or normalized == 0xFF70
+    ):
+        return "-"
+    return chr(normalized)
+
+
+def _normalized_query(source: StringSlice) raises -> PhoneticRepresentation:
+    """Apply Yomi's source-mapped ASCII case/width and dash query folds."""
+    var owned = String(source)
+    var output = String()
+    var mappings = List[SourceMapping](capacity=source.byte_length())
+    var source_cursor = 0
+    var output_cursor = 0
+    for scalar in StringSlice(owned).codepoint_slices():
+        var source_end = source_cursor + scalar.byte_length()
+        var normalized = _normalized_query_scalar(_first_code_point(scalar))
+        var output_end = output_cursor + normalized.byte_length()
+        output += normalized
+        mappings.append(
+            SourceMapping(output_cursor, output_end, source_cursor, source_end)
+        )
+        source_cursor = source_end
+        output_cursor = output_end
+    return PhoneticRepresentation._from_validated(owned^, output^, mappings^)
+
+
+def _all_ascii_alphabetic(text: StringSlice) -> Bool:
+    if text.byte_length() <= 1:
+        return False
+    for index in range(text.byte_length()):
+        var value = ord(text[byte=index])
+        if value < 0x61 or value > 0x7A:
+            return False
+    return True
+
+
+def _append_query_key(
+    mut output: List[SearchKey],
+    kind: SearchKeyKind,
+    representation: PhoneticRepresentation,
+    max_count: Int,
+    max_total_key_bytes: Int,
+    mut generated_bytes: Int,
+):
+    if len(output) >= max_count:
+        return
+    var byte_count = representation.text_byte_length()
+    if generated_bytes + byte_count > max_total_key_bytes:
+        return
+    for index in range(len(output)):
+        if output[index].kind() == kind and output[index].has_representation_text(
+            representation
+        ):
+            return
+    generated_bytes += byte_count
+    output.append(SearchKey(kind, representation.copy()))
 
 
 def _push_unique(
@@ -319,6 +550,7 @@ def pinyin_representations(
     combinations are generated, so work remains linear in the number of mapped
     source scalars under the explicit `max_count` cap.
     """
+    polyphone.validate()
     if max_count < 0:
         raise Error("max_count must be nonnegative; got " + String(max_count))
     var output = List[PhoneticRepresentation](capacity=max_count)
@@ -350,3 +582,136 @@ def pinyin_representations(
             if len(output) >= max_count:
                 return output^
     return output^
+
+
+def chinese_candidate_keys(
+    source: StringSlice,
+    max_count: Int = 8,
+    max_total_key_bytes: Int = 1024,
+    polyphone: ChinesePolyphoneMode = ChinesePolyphoneMode.COMMON,
+) raises -> SearchKeyBundle:
+    """Build original plus typed, bounded Chinese pinyin candidate keys.
+
+    The original key is required and does not consume the generated-byte
+    budget. Generated keys retain full, joined, and initials order for the
+    primary reading, followed by one-character common-reading substitutions.
+    Duplicate ``(kind, text)`` pairs are removed before consuming either cap.
+    ``max_count`` is within ``[0, 8]`` and the default generated-byte budget is
+    1,024 bytes.
+    """
+    polyphone.validate()
+    if max_count < 0 or max_count > 8:
+        raise Error(
+            "max_count must be within [0, 8] for Chinese candidate keys; got "
+            + String(max_count)
+        )
+    if max_total_key_bytes < 0:
+        raise Error(
+            "max_total_key_bytes must be nonnegative; got "
+            + String(max_total_key_bytes)
+        )
+
+    var output = List[SearchKey](capacity=max_count)
+    if max_count == 0:
+        return SearchKeyBundle(output^, max_count)
+    output.append(SearchKey(SearchKeyKind.ORIGINAL, _identity_representation(source)))
+    if max_count == 1 or max_total_key_bytes == 0:
+        return SearchKeyBundle(output^, max_count)
+
+    var reading_limit = 3
+    if polyphone == ChinesePolyphoneMode.NONE or max_count <= 4:
+        reading_limit = 1
+    var scan = _scan_units_bounded(source, reading_limit, max_total_key_bytes)
+    if scan._exceeded or len(scan._units) == 0:
+        return SearchKeyBundle(output^, max_count)
+    var units = scan.take_units()
+    var selected = _primary_readings(units)
+    var generated_bytes = 0
+    _push_typed_sequence(
+        source,
+        units,
+        selected,
+        output,
+        max_count,
+        max_total_key_bytes,
+        generated_bytes,
+    )
+    if polyphone == ChinesePolyphoneMode.NONE or len(output) >= max_count:
+        return SearchKeyBundle(output^, max_count)
+
+    var max_readings = 1
+    for index in range(len(units)):
+        max_readings = max(max_readings, len(units[index]._readings))
+    for reading_index in range(1, max_readings):
+        for unit_index in range(len(units)):
+            if reading_index >= len(units[unit_index]._readings):
+                continue
+            var primary = selected[unit_index].copy()
+            selected[unit_index] = units[unit_index]._readings[reading_index].copy()
+            _push_typed_sequence(
+                source,
+                units,
+                selected,
+                output,
+                max_count,
+                max_total_key_bytes,
+                generated_bytes,
+            )
+            selected[unit_index] = primary^
+            if len(output) >= max_count:
+                return SearchKeyBundle(output^, max_count)
+    return SearchKeyBundle(output^, max_count)
+
+
+def chinese_query_keys(
+    source: StringSlice,
+    max_count: Int = 3,
+    max_total_key_bytes: Int = 1024,
+) raises -> SearchKeyBundle:
+    """Build bounded literal, normalized, and initials query variants.
+
+    The literal query is always first. A changed ASCII case/width/dash form is
+    retained as a normalized base key. Normalized lowercase ASCII alphabetic
+    input longer than one byte then contributes an initials variant under the
+    generated-byte budget. A same-text pinyin variant is coverage-redundant:
+    the literal or normalized kind already covers full and joined pinyin.
+    """
+    if max_count < 0 or max_count > 3:
+        raise Error(
+            "max_count must be within [0, 3] for Chinese query keys; got "
+            + String(max_count)
+        )
+    if max_total_key_bytes < 0:
+        raise Error(
+            "max_total_key_bytes must be nonnegative; got "
+            + String(max_total_key_bytes)
+        )
+
+    var output = List[SearchKey](capacity=max_count)
+    if max_count == 0:
+        return SearchKeyBundle(output^, max_count)
+    output.append(
+        SearchKey(SearchKeyKind.QUERY_ORIGINAL, _identity_representation(source))
+    )
+    if max_count == 1:
+        return SearchKeyBundle(output^, max_count)
+
+    var normalized = _normalized_query(source)
+    if not normalized.text_equals(source):
+        output.append(SearchKey(SearchKeyKind.QUERY_NORMALIZED, normalized.copy()))
+    if len(output) >= max_count or max_total_key_bytes == 0:
+        return SearchKeyBundle(output^, max_count)
+    var normalized_text = normalized.text()
+    if not _all_ascii_alphabetic(normalized_text):
+        return SearchKeyBundle(output^, max_count)
+
+    var generated_bytes = 0
+    _append_query_key(
+        output,
+        SearchKeyKind.QUERY_INITIALS,
+        normalized,
+        max_count,
+        max_total_key_bytes,
+        generated_bytes,
+    )
+    return SearchKeyBundle(output^, max_count)

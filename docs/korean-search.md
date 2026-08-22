@@ -11,16 +11,17 @@ Yomi exposes four explicit modern-Hangul finder transformations:
 
 For ordinary candidate indexing, `korean_candidate_keys(source)` is the small
 front door over those slices. It returns typed `SearchKey` values in this
-stable order:
+stable order, with duplicate `(kind, text)` pairs removed:
 
 | Kind | `서울` key |
 | --- | --- |
 | `ORIGINAL` | `서울` |
 | `KOREAN_ROMANIZED` | `seoul` |
+| `KOREAN_ROMANIZED` | `seo ul` |
 | `KOREAN_INITIALS` | `ㅅㅇ` |
 | `KOREAN_KEYBOARD` | `tjdnf` |
 
-`max_count` is constrained to `[0, 4]`. `max_total_key_bytes` bounds the three
+`max_count` is constrained to `[0, 5]`. `max_total_key_bytes` bounds the four
 generated keys together while leaving the original key available, so a caller
 can put a hard ceiling on indexing expansion without learning representation
 details. Generation stops as soon as the count cap is full; a zero generated
@@ -66,7 +67,11 @@ case-insensitive finder path, matching Yuru's established key behavior.
 
 Each requested representation performs one grapheme scan and appends directly
 to its output and mapping buffers. The unified bundle stops generating as soon
-as its count or byte budget is exhausted. Profiling on Apple M4 identified
+as its count or byte budget is exhausted. When the byte budget is smaller than
+the source, a shared-rule lower-bound scan rejects impossible generation early;
+it is skipped for ordinary generous budgets. On the checked-in 128-syllable,
+one-byte workload, the compiled Mojo 1.0 benchmark changed from 42.923 ms to
+1.094 ms per 1,000 labels after this preflight. Profiling on Apple M4 identified
 allocation and list growth, rather than scalar arithmetic, as the important
 cost across CJK key generation. Hangul table selection and UTF-8 expansion are
 branch-heavy, variable-length work, so this implementation intentionally does

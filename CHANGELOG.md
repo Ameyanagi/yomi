@@ -5,6 +5,26 @@ and uses semantic versioning for public releases.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-22
+
+### Added
+
+- Add typed, root-exported `chinese_candidate_keys` and `chinese_query_keys`
+  front doors with exact source mappings, deterministic common polyphones,
+  `(kind, text)` candidate deduplication, coverage-aware query deduplication,
+  and generation-time count/byte budgets.
+- Add spaced Hangul romanization to `korean_candidate_keys` while retaining a
+  five-key hard cap and the shared generated-byte budget.
+- Add consuming `SearchKey.take_representation()` and
+  `SearchKeyBundle.take_keys()` accessors for allocation-sensitive pipelines.
+
+### Changed
+
+- Move Japanese compatibility wrappers onto the consuming key accessors so
+  owned representations are transferred instead of detached and copied.
+- Benchmark the unified Chinese candidate-key path and expand package smoke
+  coverage to the new typed APIs.
+
 ## [0.1.0] - 2026-08-22
 
 ### Changed
@@ -67,5 +87,6 @@ and uses semantic versioning for public releases.
 - Gate source releases on full installed-package verification across the
   supported platform matrix.
 
-[Unreleased]: https://github.com/Ameyanagi/yomi/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Ameyanagi/yomi/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Ameyanagi/yomi/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Ameyanagi/yomi/releases/tag/v0.1.0

@@ -1,4 +1,6 @@
 from yomi import (
+    chinese_candidate_keys,
+    chinese_query_keys,
     pinyin_full,
     pinyin_initials,
     pinyin_joined,
@@ -8,6 +10,14 @@ from yomi import (
 
 def main() raises:
     var source = "北京大学"
+    var keys = chinese_candidate_keys(source)
+    for index in range(keys.count()):
+        print("candidate", keys.key(index).text())
+
+    var queries = chinese_query_keys("ＢＪＤＸ")
+    for index in range(queries.count()):
+        print("query", queries.key(index).text())
+
     print("full", pinyin_full(source).text())
     print("joined", pinyin_joined(source).text())
     print("initials", pinyin_initials(source).text())

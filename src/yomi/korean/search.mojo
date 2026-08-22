@@ -331,7 +331,9 @@ def _hangul_search_representation(
 ) raises -> PhoneticRepresentation:
     var source = String(text)
     var transformed = String()
-    var mappings = List[SourceMapping]()
+    # UTF-8 bytes are a safe upper bound on source graphemes plus generated
+    # separators and avoid growth in the profiled candidate-bundle path.
+    var mappings = List[SourceMapping](capacity=text.byte_length())
     var source_cursor = 0
     var output_cursor = 0
     var previous_was_hangul = False
@@ -367,7 +369,7 @@ def _hangul_search_representation(
             previous_was_hangul = False
         source_cursor = source_end
 
-    return PhoneticRepresentation(source^, transformed^, mappings^)
+    return PhoneticRepresentation._from_validated(source^, transformed^, mappings^)
 
 
 def romanize_hangul(text: StringSlice) raises -> PhoneticRepresentation:
