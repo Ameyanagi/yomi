@@ -3,7 +3,7 @@ authors = ["Ameyanagi <contact@ameyanagi.com>"]
 channels = ["https://conda.modular.com/max", "conda-forge"]
 name = "yomi"
 platforms = ["osx-arm64", "linux-64", "linux-aarch64"]
-version = "0.0.0"
+version = "0.1.0"
 
 [tasks]
 bench-search-keys = { cmd = "mojo run -I src benchmarks/bench_search_keys.mojo", description = "Benchmark profiled CJK search-key generation" }

@@ -2,7 +2,7 @@
 
 CJK phonetic representations and readings for Mojo.
 
-> **Experimental — API not yet released.**
+> **Experimental v0.1 API.** Source compatibility may change before 1.0.
 
 ## Install
 
