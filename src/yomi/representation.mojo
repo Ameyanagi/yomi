@@ -39,11 +39,14 @@ struct SourceMapping(Copyable):
 
     All offsets are half-open byte offsets. A transformed source grapheme may
     occupy a different number of output bytes, so consumers must not assume
-    that the two ranges have equal lengths. Construction establishes range
-    shape; `PhoneticRepresentation` additionally validates the ranges against
-    its owned source and transformed text. Reads trust those invariants. Direct
-    mutation of underscore-prefixed storage is out of contract; call
-    `validate()` explicitly after unusual low-level mutation.
+    that the two ranges have equal lengths. Generated separators use
+    `SourceMapping.unmapped()` and have no source range; call `has_source()`
+    before reading their source offsets. Their internal source-offset sentinel
+    is an implementation detail. Construction establishes range shape;
+    `PhoneticRepresentation` additionally validates ranges against its owned
+    source and transformed text. Reads trust those invariants. Direct mutation
+    of underscore-prefixed storage is out of contract; call `validate()`
+    explicitly after unusual low-level mutation.
     """
 
     var _output_start: Int
@@ -64,12 +67,26 @@ struct SourceMapping(Copyable):
         self._source_end = source_end
         self.validate()
 
+    @staticmethod
+    def unmapped(output_start: Int, output_end: Int) raises -> Self:
+        """Construct an output span generated without source text."""
+        return Self(output_start, output_end, -1, -1)
+
     def validate(self) raises:
         """Validate the stored output and source ranges explicitly."""
         if self._output_start < 0 or self._output_end <= self._output_start:
             raise Error("output mapping range must be nonnegative and non-empty")
+        if self._source_start == -1 and self._source_end == -1:
+            return
         if self._source_start < 0 or self._source_end <= self._source_start:
-            raise Error("source mapping range must be nonnegative and non-empty")
+            raise Error(
+                "source mapping range must be nonnegative and non-empty, "
+                "or both offsets must be -1 for unmapped output"
+            )
+
+    def has_source(self) -> Bool:
+        """Return whether this output span maps to source text."""
+        return self._source_start >= 0
 
     def output_start(self) -> Int:
         """Return the inclusive output byte offset."""
@@ -80,11 +97,11 @@ struct SourceMapping(Copyable):
         return self._output_end
 
     def source_start(self) -> Int:
-        """Return the inclusive source byte offset."""
+        """Return the inclusive source byte offset; requires `has_source()`."""
         return self._source_start
 
     def source_end(self) -> Int:
-        """Return the exclusive source byte offset."""
+        """Return the exclusive source byte offset; requires `has_source()`."""
         return self._source_end
 
 
@@ -124,10 +141,11 @@ struct PhoneticRepresentation(Copyable):
                 raise Error("output mappings must be ordered and gap-free")
             if not _is_utf8_boundary(self._text, mapping._output_end):
                 raise Error("output mapping range must end at a UTF-8 boundary")
-            if not _is_utf8_boundary(self._source, mapping._source_start):
-                raise Error("source mapping range must start at a UTF-8 boundary")
-            if not _is_utf8_boundary(self._source, mapping._source_end):
-                raise Error("source mapping range must end at a UTF-8 boundary")
+            if mapping.has_source():
+                if not _is_utf8_boundary(self._source, mapping._source_start):
+                    raise Error("source mapping range must start at a UTF-8 boundary")
+                if not _is_utf8_boundary(self._source, mapping._source_end):
+                    raise Error("source mapping range must end at a UTF-8 boundary")
             expected_output_start = mapping._output_end
         if expected_output_start != self._text.byte_length():
             raise Error("output mappings must cover the transformed text")
@@ -139,6 +157,18 @@ struct PhoneticRepresentation(Copyable):
     def text(self) -> String:
         """Return a copy of the transformed text."""
         return self._text.copy()
+
+    def text_byte_length(self) -> Int:
+        """Return the transformed UTF-8 byte length without copying text."""
+        return self._text.byte_length()
+
+    def text_equals(self, value: StringSlice) -> Bool:
+        """Compare transformed text without constructing a detached copy."""
+        return self._text == value
+
+    def has_same_text(self, other: Self) -> Bool:
+        """Compare two transformed values without copying either string."""
+        return self._text == other._text
 
     def mapping_count(self) -> Int:
         """Return the number of mapping spans."""
@@ -181,7 +211,8 @@ struct PhoneticRepresentation(Copyable):
             var mapping = self._mappings[index].copy()
             if mapping._output_start >= output_end:
                 break
-            ranges.append(SourceRange(mapping._source_start, mapping._source_end))
+            if mapping.has_source():
+                ranges.append(SourceRange(mapping._source_start, mapping._source_end))
             index += 1
 
         _sort_source_ranges(ranges)

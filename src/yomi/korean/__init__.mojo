@@ -2,3 +2,5 @@
 
 from .choseong import hangul_choseong
 from .hangul import compose_hangul, decompose_hangul
+from .keys import korean_candidate_keys
+from .search import hangul_keyboard, romanize_hangul, romanize_hangul_spaced

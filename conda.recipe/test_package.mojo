@@ -1,6 +1,24 @@
 from std.testing import assert_equal
 
-from yomi import decompose_hangul, hangul_choseong, romanize_kana
+from yomi import (
+    SearchKeyKind,
+    decompose_hangul,
+    hangul_choseong,
+    hangul_keyboard,
+    japanese_query_kana,
+    japanese_query_keys,
+    japanese_candidate_keys,
+    japanese_search_keys,
+    japanese_search_representations,
+    korean_candidate_keys,
+    pinyin_full,
+    pinyin_initials,
+    pinyin_joined,
+    pinyin_representations,
+    romanize_hangul,
+    romanize_hangul_spaced,
+    romanize_kana,
+)
 
 
 def main() raises:
@@ -21,6 +39,18 @@ def main() raises:
 
     var decomposed = hangul_choseong("한")
     assert_equal(decomposed.text(), "ㅎ")
+
+    assert_equal(romanize_hangul("한글").text(), "hangeul")
+    var spaced = romanize_hangul_spaced("한글")
+    assert_equal(spaced.text(), "han geul")
+    var generated_space = spaced.source_ranges_for_output(3, 4)
+    assert_equal(len(generated_space), 0)
+    assert_equal(hangul_keyboard("한글").text(), "gksrmf")
+    var korean_keys = korean_candidate_keys("서울")
+    assert_equal(korean_keys.count(), 4)
+    assert_equal(korean_keys.key(1).text(), "seoul")
+    assert_equal(korean_keys.key(2).text(), "ㅅㅇ")
+    assert_equal(korean_keys.key(3).text(), "tjdnf")
 
     var hangul = decompose_hangul("각")
     assert_equal(hangul.source_text(), "각")
@@ -52,3 +82,20 @@ def main() raises:
     assert_equal(len(kana_source), 1)
     assert_equal(kana_source[0].start(), 0)
     assert_equal(kana_source[0].end(), 12)
+
+    assert_equal(japanese_query_kana("zyu").text(), "じゅ")
+    var japanese_query_variants = japanese_query_keys("kanya")
+    assert_equal(japanese_query_variants.count(), 3)
+    assert_equal(japanese_query_variants.key(0).weight(), 500)
+    assert_equal(SearchKeyKind.LEARNED_ALIAS.default_weight(), 2500)
+    var japanese_keys = japanese_search_representations("8月")
+    assert_equal(japanese_keys[2].text(), "hachigatsu")
+    assert_equal(japanese_search_keys("8月").count(), len(japanese_keys))
+    assert_equal(japanese_candidate_keys("8月").key(0).text(), "8月")
+
+    assert_equal(pinyin_full("北京大学").text(), "bei jing da xue")
+    assert_equal(pinyin_joined("北京大学").text(), "beijingdaxue")
+    assert_equal(pinyin_initials("北京大学").text(), "bjdx")
+    var pinyin_alternatives = pinyin_representations("还没")
+    assert_equal(len(pinyin_alternatives), 8)
+    assert_equal(pinyin_alternatives[4].text(), "huanmei")

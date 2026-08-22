@@ -3,7 +3,8 @@
 ## v0.1 — Foundation
 
 - Stabilize the source-mapping builder and matched-range query.
-- Complete Hangul decomposition, choseong search, and Dubeolsik keyboard forms.
+- Maintain completed Hangul decomposition, romanization, choseong search, and
+  Dubeolsik keyboard forms against downstream Yuragi fixtures.
 - Add kana romanization only after the Korean exit gate passes.
 - Add deterministic licensed pinyin and initials tables after the kana gate.
 - Represent alternative readings explicitly rather than choosing silently.
@@ -14,13 +15,20 @@
 ## v0.2 — Usability
 
 - Add ergonomic multilingual APIs only after v0.1 downstream usage evidence.
+- Maintain the fixed Japanese finder-key bundle and provider seam against
+  Yuru/Yuragi integration fixtures.
+- Maintain typed compatibility gates and the strict six-generated/eight-query
+  caps against Yuru/Yuragi integration fixtures.
+- Maintain unified candidate count/byte budgets and score-weight metadata
+  against the checked-in Yuru source.
 - Expand supported reading data without changing ambiguity semantics silently.
 - Expand examples and Yuragi integration fixtures.
 - Publish the first modular-community recipe when the package is useful alone.
 
 ## v0.3 — Performance
 
-- Add reproducible benchmarks and representative datasets.
+- Maintain the profiler-oriented CJK benchmark and add representative,
+  licensed datasets as their provenance can be checked in.
 - Optimize measured bottlenecks without weakening correctness or API clarity.
 - Add SIMD or specialized backends only behind the same semantic contract.
 

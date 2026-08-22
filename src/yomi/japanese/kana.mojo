@@ -45,7 +45,7 @@ def _fold_katakana(value: Int) -> Int:
 
 
 def _scan_kana_units(source: StringSlice) -> List[_KanaUnit]:
-    var units = List[_KanaUnit]()
+    var units = List[_KanaUnit](capacity=source.byte_length())
     var source_cursor = 0
     for grapheme in source.graphemes():
         var first = -1
@@ -446,7 +446,7 @@ def romanize_kana(text: StringSlice) raises -> PhoneticRepresentation:
     var source = String(text)
     var units = _scan_kana_units(source)
     var transformed = String()
-    var mappings = List[SourceMapping]()
+    var mappings = List[SourceMapping](capacity=len(units))
     var output_cursor = 0
     var last_vowel: Optional[Int] = None
     var index = 0

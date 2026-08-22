@@ -39,6 +39,47 @@ The Mojo import is `yomi`. The eventual Conda distribution is
 
 ## Korean public slices
 
+Use `korean_candidate_keys` when a finder wants the normal Korean indexing
+bundle. It returns at most four typed keys in stable order: original text,
+joined romanization, choseong initials, and Dubeolsik keyboard input. Generated
+keys share one byte budget; the original key does not consume that budget:
+
+```mojo
+from yomi import korean_candidate_keys
+
+
+def main() raises:
+    var keys = korean_candidate_keys("서울")
+    for index in range(keys.count()):
+        print(keys.key(index).text())  # 서울, seoul, ㅅㅇ, tjdnf
+```
+
+The four individual transformations remain available when a caller needs one
+specific representation, with no mode object or boolean combinations:
+
+```mojo
+from yomi import (
+    hangul_choseong,
+    hangul_keyboard,
+    romanize_hangul,
+    romanize_hangul_spaced,
+)
+
+
+def main() raises:
+    print(romanize_hangul("한글").text())  # hangeul
+    print(romanize_hangul_spaced("한글").text())  # han geul
+    print(hangul_choseong("한글").text())  # ㅎㄱ
+    print(hangul_keyboard("한글").text())  # gksrmf
+```
+
+Romanization is a deterministic Revised-Romanization-style spelling for
+finder recall; it does not apply pronunciation-dependent assimilation.
+`hangul_keyboard` emits the lowercased QWERTY sequence for the Korean
+Dubeolsik (2-set) layout. NFC and canonical NFD inputs produce identical key
+text. Other grapheme clusters pass through unchanged, including mixed path and
+label text. See [the Korean search-key convention](docs/korean-search.md).
+
 `hangul_choseong` gives NFC and canonically decomposed modern Hangul compatible
 choseong views and passes other grapheme clusters through unchanged:
 
@@ -98,7 +139,64 @@ def main() raises:
     print(mapping.source_start(), mapping.source_end())  # 0 9
 ```
 
+## Chinese public slices
+
+The primary-reading front door is three explicit source-preserving functions:
+
+```mojo
+from yomi import pinyin_full, pinyin_initials, pinyin_joined
+
+
+def main() raises:
+    print(pinyin_full("北京大学").text())  # bei jing da xue
+    print(pinyin_joined("北京大学").text())  # beijingdaxue
+    print(pinyin_initials("北京大学").text())  # bjdx
+```
+
+`pinyin_representations` adds a small capped set of common single-character
+alternates in deterministic Yuru-compatible order. It defaults to eight keys;
+`ChinesePolyphoneMode.NONE` requests only the primary full, joined, and initials
+forms. Generated spaces have explicit unmapped output spans, so highlighting a
+syllable still projects to its exact original Han scalar. See
+[the Chinese search-key contract](docs/chinese-search.md) and
+[data provenance](docs/data-provenance.md).
+
 ## Japanese public slices
+
+Finder-oriented Japanese indexing uses explicit kana, romaji, and query
+transformations. Typed bundles let a fuzzy finder apply Yuru-compatible
+query/candidate gates without inspecting text or list positions. The candidate
+bundle adds algorithmic Arabic-numeral year/month readings without a dictionary
+dependency:
+
+```mojo
+from yomi import japanese_candidate_keys, japanese_query_keys
+
+
+def main() raises:
+    var queries = japanese_query_keys("kanya")
+    for index in range(queries.count()):
+        print(queries.key(index).text())  # kanya, かにゃ, かんや
+
+    var keys = japanese_candidate_keys("2025年8月")
+    for index in range(keys.count()):
+        print(keys.key(index).text())
+```
+
+Full-width ASCII and spaces, half-width katakana, dash variants, and prolonged
+marks share Yuru-compatible finder forms with exact source-byte mappings.
+The unified candidate bundle starts with literal and normalized base keys, then
+adds generated Japanese keys under an eight-key/1,024-byte default budget.
+Romaji-query expansion is deduplicated, hard-capped at eight variants, trims
+ASCII whitespace at the parser boundary, handles
+ambiguous `n` before `y`, and adds the reviewed Yuru long-vowel guesses for
+Tokyo, Kyoto, Osaka, Kobe, repeated `o`, and numeric-romaji input such as
+`8gatsu -> はちがつ`. The older explicit
+`japanese_query_kana` and `japanese_search_representations` transformations
+remain available when callers do not need typed fanout.
+Kanji dictionary readings remain behind a documented optional-provider seam;
+Yomi does not embed an unlicensed or misleading partial dictionary. See
+[the Japanese search-key contract](docs/japanese-search.md).
 
 `romanize_kana` supports source-preserving finder keys. A match for `raamen`
 in output bytes `[0, 6)` projects back to the exact katakana source range
@@ -138,17 +236,19 @@ predicates for deciding whether to attempt a phonetic representation. They
 require every scalar to belong to the documented script set and return `False`
 for empty input.
 
-Every mapping is an ordered pair of half-open UTF-8 byte ranges. Output ranges
-refer to the transformed text; source ranges refer to the original input. The
-representation owns copies of both texts and validates mapping bounds and UTF-8
-boundaries against them at construction. Accessors trust the validated value
-and are non-raising except where an operation validates new input, such as a
-mapping index or output match range. Mojo 1.0 does not enforce field privacy,
-so direct mutation of underscore-prefixed storage is out of contract;
-`validate()` provides an explicit checkpoint for unusual low-level work.
+Every mapping has a half-open UTF-8 output range and either a half-open source
+range or an explicit unmapped state for generated separators. The
+representation owns copies of both texts and validates mapping bounds and
+UTF-8 boundaries at construction. Call `has_source()` before reading a
+mapping's source offsets. Accessors trust the validated value and are
+non-raising except where an operation validates new input, such as a mapping
+index or output match range. Mojo 1.0 does not enforce field privacy, so direct
+mutation of underscore-prefixed storage is out of contract; `validate()`
+provides an explicit checkpoint for unusual low-level work.
 `mapping_snapshot()` returns a detached list for efficient enumeration.
 `source_ranges_for_output()` projects a match to ordered exact source ranges,
-merging only overlapping or touching ranges and never bridging a source gap.
+ignoring unmapped separators, merging only overlapping or touching ranges, and
+never bridging a source gap.
 The API is experimental and may change before v0.1.
 
 ## Repository map
@@ -156,7 +256,7 @@ The API is experimental and may change before v0.1.
 - `src/yomi/`: library or application source
 - `tests/`: TestSuite unit, reference-value, and invariant tests
 - `examples/`: small compilable usage programs
-- `benchmarks/`: reproducible methodology and later benchmark programs
+- `benchmarks/`: reproducible profiler-oriented benchmark programs
 - `docs/`: architecture, design, compatibility, roadmap, and release policy
 - `conda.recipe/`: local Rattler build recipe
 

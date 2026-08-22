@@ -84,9 +84,9 @@ prints the exact byte mappings; the full locked check passes.
 
 ## K1 — Complete Korean v0.1
 
-Status: in progress. Algorithmic decomposition, canonical composition, and the
-exhaustive round-trip oracle are implemented; the Dubeolsik representation
-remains open.
+Status: implemented. Algorithmic decomposition, canonical composition,
+deterministic joined/spaced romanization, choseong, Dubeolsik input, source
+projection, and exhaustive modern-syllable coverage are implemented.
 
 Deliverables:
 
@@ -95,18 +95,19 @@ Deliverables:
 - canonical `compose_hangul` contraction for modern conjoining Jamo and
   precomposed LV syllables followed by trailing Jamo (implemented);
 - choseong recognition for both precomposed syllables and canonical Jamo input;
-- Dubeolsik keyboard representation with an explicitly documented layout;
+- Dubeolsik keyboard representation with an explicitly documented layout
+  (implemented);
 - APIs that distinguish representation kind rather than accepting ambiguous
-  boolean option combinations;
-- mappings for one-to-many decomposition and keyboard output;
+  boolean option combinations (implemented);
+- mappings for one-to-many decomposition and keyboard output (implemented);
 - exhaustive generated tests over all 11,172 modern precomposed syllables,
   plus isolated Jamo, compatibility Jamo, mixed scripts, and boundaries.
 
-Exit gate: the compose/round-trip portion is satisfied via `compose_hangul`:
-decomposition followed by composition recovers all 11,172 modern Hangul
-syllables, and every contracted output maps to the full decomposed source
-slice. K1 remains open until the Dubeolsik representation and its mapping gate
-are complete.
+Exit gate: decomposition followed by composition recovers all 11,172 modern
+Hangul syllables, every contracted output maps to the full decomposed source
+slice, and exhaustive romanization/keyboard walks map every modern syllable.
+The Yuru fixtures `한글 -> hangeul`, `han geul`, `ㅎㄱ`, and `gksrmf` pass for
+NFC and canonical NFD input.
 
 ## J0 — Japanese kana v0.1
 
@@ -155,6 +156,32 @@ only the Mojo package, ambiguity/reference fixtures pass, and Yuragi can prove
 `北京大学` maps from `beijingdaxue`/`bjdx` matches to the four exact original
 source-character ranges. This gate completes the v0.1 language surface.
 
+## J1 — Japanese finder compatibility
+
+Status: the algorithmic, dependency-free slice is implemented.
+
+Deliverables:
+
+- width, dash, space, case, half-width-katakana, and kana compatibility keys;
+- exact source-preserving kana and romaji candidate representations;
+- deterministic common IME aliases including `zyu`, `nn`/`xn`, small-kana
+  `l`/`x` forms, and doubled consonants;
+- typed candidate/query bundles and Yuru-compatible kind gates;
+- one budgeted original/normalized/Japanese indexing bundle with explicit
+  current-Yuru weight metadata and learned-alias kind coverage;
+- capped ambiguous-`n` fanout and reviewed long-vowel query variants with
+  exact source-byte projection;
+- parser-boundary ASCII trimming and numeric-romaji variants before ordinary
+  romaji query expansion;
+- capped full-reading and compact-mixed forms for Arabic integers immediately
+  before `年` and `月`, including irregular hundreds and thousands;
+- a documented provider-composition seam for licensed Kanji readings.
+
+Kanji dictionary integration remains blocked on a reviewed licensed provider
+with pinned artifacts, tokenization boundaries, ambiguity and unknown-word
+policy, a hard output cap, and exact UTF-8 source mappings. Partial embedded
+word lists do not satisfy this gate.
+
 ## D0 — Japanese dictionary readings (post-v0.1)
 
 This phase requires a separate design review covering dictionary licensing,
@@ -163,8 +190,7 @@ Full morphological analysis remains outside Yomi unless explicitly approved.
 
 ## Immediate next tasks
 
-1. Specify and implement the Dubeolsik keyboard representation.
-2. Run the J0 host compiler and test gate on the pinned Mojo toolchain.
-3. Complete the Korean and kana exit gates before adding generated pinyin data.
-4. Complete pinyin/initials provenance, ambiguity, mapping, and Yuragi `bjdx`
+1. Complete pinyin/initials provenance, ambiguity, mapping, and Yuragi `bjdx`
    integration evidence before declaring v0.1.
+2. Exercise all four Korean representations at the Yuragi integration gate.
+3. Add benchmarks before changing the scalar text implementation.
