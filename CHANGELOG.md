@@ -11,7 +11,8 @@ and uses semantic versioning for public releases.
 
 - Add typed, root-exported `chinese_candidate_keys` and `chinese_query_keys`
   front doors with exact source mappings, deterministic common polyphones,
-  `(kind, text)` deduplication, and generation-time count/byte budgets.
+  `(kind, text)` candidate deduplication, coverage-aware query deduplication,
+  and generation-time count/byte budgets.
 - Add spaced Hangul romanization to `korean_candidate_keys` while retaining a
   five-key hard cap and the shared generated-byte budget.
 - Add consuming `SearchKey.take_representation()` and

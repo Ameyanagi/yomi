@@ -1,10 +1,12 @@
 # Benchmarks
 
-`bench_search_keys.mojo` exercises the three shipped CJK key-generation paths
-over 10,000 deterministic candidates, plus a base-only capped-bundle workload
-that catches eager generation after count/byte budgets are exhausted. It
-performs three warmups, records 31 samples, and reports nearest-rank p50/p95
-plus a checksum.
+`bench_search_keys.mojo` exercises the three shipped CJK candidate-key paths
+and Chinese query expansion over 10,000 deterministic inputs. It also includes
+a base-only capped-bundle workload and 1,000 long Korean labels under a one-byte
+generated budget to catch eager work after caps are exhausted. It performs
+three warmups, records 31 samples, and reports nearest-rank p50/p95. Checksums
+consume aggregate key byte lengths and kind weights, rather than counts alone,
+so key construction cannot disappear as dead work.
 
 Run the source benchmark with:
 

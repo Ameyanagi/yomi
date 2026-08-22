@@ -53,8 +53,9 @@ it is not part of these scalar text APIs.
 Chinese primary forms follow the same explicit-transform rule through
 `pinyin_full`, `pinyin_joined`, and `pinyin_initials`.
 `chinese_candidate_keys` combines those forms with the required original under
-one nine-key/1,024-byte default, while `chinese_query_keys` emits at most four
-typed query views. `ChinesePolyphoneMode` controls only bounded
+one eight-key/1,024-byte default, while `chinese_query_keys` emits at most three
+coverage-distinct typed query views. `ChinesePolyphoneMode` is a validated
+total nominal value and controls only bounded
 one-source-scalar substitutions. The generated table is fixed-width and
 scalar-sorted, so lookup is binary search without table materialization. UTF-8
 extraction and polyphone substitution are branch-heavy and variable-length;

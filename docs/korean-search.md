@@ -67,7 +67,11 @@ case-insensitive finder path, matching Yuru's established key behavior.
 
 Each requested representation performs one grapheme scan and appends directly
 to its output and mapping buffers. The unified bundle stops generating as soon
-as its count or byte budget is exhausted. Profiling on Apple M4 identified
+as its count or byte budget is exhausted. When the byte budget is smaller than
+the source, a shared-rule lower-bound scan rejects impossible generation early;
+it is skipped for ordinary generous budgets. On the checked-in 128-syllable,
+one-byte workload, the compiled Mojo 1.0 benchmark changed from 42.923 ms to
+1.094 ms per 1,000 labels after this preflight. Profiling on Apple M4 identified
 allocation and list growth, rather than scalar arithmetic, as the important
 cost across CJK key generation. Hangul table selection and UTF-8 expansion are
 branch-heavy, variable-length work, so this implementation intentionally does

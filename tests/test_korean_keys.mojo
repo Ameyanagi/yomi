@@ -41,6 +41,18 @@ def test_korean_candidate_key_caps_and_budget_are_deterministic() raises:
     with assert_raises(contains="must be nonnegative"):
         _ = korean_candidate_keys("서울", 5, -1)
 
+    var long_source = String()
+    for _ in range(128):
+        long_source += "한"
+    assert_equal(korean_candidate_keys(long_source, 5, 1).count(), 1)
+
+    # A leading-Jamo grapheme with an extender can shrink in the choseong view;
+    # the preflight lower bound must leave that fitting representation intact.
+    var shrinking = korean_candidate_keys("ᄀ\u0301", 5, 3)
+    assert_equal(shrinking.count(), 2)
+    assert_true(shrinking.key(1).kind() == SearchKeyKind.KOREAN_INITIALS)
+    assert_equal(shrinking.key(1).text(), "ㄱ")
+
 
 def test_korean_bundle_preserves_empty_passthrough_and_decomposed_input() raises:
     var empty = korean_candidate_keys("")

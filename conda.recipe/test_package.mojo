@@ -121,8 +121,11 @@ def main() raises:
     assert_equal(
         chinese_keys.key(3).kind() == SearchKeyKind.CHINESE_PINYIN_INITIALS, True
     )
+    var common_chinese_keys = chinese_candidate_keys("还没")
+    assert_equal(common_chinese_keys.count(), 8)
+    assert_equal(common_chinese_keys.key(7).text(), "haimo")
     var chinese_queries = chinese_query_keys("ＢＪＤＸ")
-    assert_equal(chinese_queries.count(), 4)
+    assert_equal(chinese_queries.count(), 3)
     assert_equal(chinese_queries.key(2).text(), "bjdx")
     assert_equal(chinese_queries.key(2).kind() == SearchKeyKind.QUERY_INITIALS, True)
 

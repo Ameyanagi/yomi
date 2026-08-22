@@ -194,8 +194,9 @@ def main() raises:
 
 Use the two typed front doors for candidate indexing and query expansion. The
 candidate bundle retains the original, then full, joined, and initials pinyin
-under a nine-key/1,024-generated-byte default. The query bundle retains the
-literal query, a changed normalized base form, and typed initials/pinyin views:
+under an eight-key/1,024-generated-byte default. The query bundle retains the
+literal query, a changed normalized base form, and a typed initials view when
+it adds candidate-kind coverage:
 
 ```mojo
 from yomi import chinese_candidate_keys, chinese_query_keys
@@ -208,7 +209,7 @@ def main() raises:
 
     var queries = chinese_query_keys("ＢＪＤＸ")
     for index in range(queries.count()):
-        print(queries.key(index).text())  # ＢＪＤＸ, bjdx, bjdx, bjdx
+        print(queries.key(index).text())  # ＢＪＤＸ, bjdx, bjdx
 ```
 
 The three individual primary-reading functions remain available when a caller

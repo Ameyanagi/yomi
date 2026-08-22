@@ -1,6 +1,7 @@
 """Deterministic pinyin representations for Chinese search."""
 
 from std.collections import List
+from std.io import Writable, Writer
 
 from ..representation import PhoneticRepresentation, SourceMapping
 from ..search_key import SearchKey, SearchKeyBundle, SearchKeyKind
@@ -16,8 +17,12 @@ comptime _JOINED = 1
 comptime _INITIALS = 2
 
 
-struct ChinesePolyphoneMode(Copyable, Equatable, ImplicitlyCopyable):
-    """Control common single-character alternate pinyin readings."""
+struct ChinesePolyphoneMode(Copyable, Equatable, ImplicitlyCopyable, Writable):
+    """Control common single-character alternate pinyin readings.
+
+    Direct mutation of ``_value`` is out of contract; use ``validate()`` for
+    an explicit checkpoint after unusual low-level mutation.
+    """
 
     var _value: Int
 
@@ -29,6 +34,28 @@ struct ChinesePolyphoneMode(Copyable, Equatable, ImplicitlyCopyable):
 
     def __eq__(self, other: Self) -> Bool:
         return self._value == other._value
+
+    def validate(self) raises:
+        """Raise if unusual direct field mutation broke the mode invariant."""
+        if self != Self.NONE and self != Self.COMMON:
+            raise Error(
+                "ChinesePolyphoneMode _value must be 0 (NONE) or 1 (COMMON); "
+                "got _value="
+                + String(self._value)
+            )
+
+    def __str__(self) -> String:
+        var result = String()
+        self.write_to(result)
+        return result^
+
+    def write_to[W: Writer](self, mut writer: W):
+        if self == Self.NONE:
+            writer.write("NONE")
+        elif self == Self.COMMON:
+            writer.write("COMMON")
+        else:
+            writer.write("INVALID(_value=", self._value, ")")
 
 
 struct _PinyinUnit(Copyable):
@@ -523,6 +550,7 @@ def pinyin_representations(
     combinations are generated, so work remains linear in the number of mapped
     source scalars under the explicit `max_count` cap.
     """
+    polyphone.validate()
     if max_count < 0:
         raise Error("max_count must be nonnegative; got " + String(max_count))
     var output = List[PhoneticRepresentation](capacity=max_count)
@@ -558,7 +586,7 @@ def pinyin_representations(
 
 def chinese_candidate_keys(
     source: StringSlice,
-    max_count: Int = 9,
+    max_count: Int = 8,
     max_total_key_bytes: Int = 1024,
     polyphone: ChinesePolyphoneMode = ChinesePolyphoneMode.COMMON,
 ) raises -> SearchKeyBundle:
@@ -568,12 +596,13 @@ def chinese_candidate_keys(
     budget. Generated keys retain full, joined, and initials order for the
     primary reading, followed by one-character common-reading substitutions.
     Duplicate ``(kind, text)`` pairs are removed before consuming either cap.
-    ``max_count`` is within ``[0, 9]`` and the default generated-byte budget is
+    ``max_count`` is within ``[0, 8]`` and the default generated-byte budget is
     1,024 bytes.
     """
-    if max_count < 0 or max_count > 9:
+    polyphone.validate()
+    if max_count < 0 or max_count > 8:
         raise Error(
-            "max_count must be within [0, 9] for Chinese candidate keys; got "
+            "max_count must be within [0, 8] for Chinese candidate keys; got "
             + String(max_count)
         )
     if max_total_key_bytes < 0:
@@ -636,20 +665,20 @@ def chinese_candidate_keys(
 
 def chinese_query_keys(
     source: StringSlice,
-    max_count: Int = 4,
+    max_count: Int = 3,
     max_total_key_bytes: Int = 1024,
 ) raises -> SearchKeyBundle:
-    """Build bounded literal, normalized, initials, and pinyin query variants.
+    """Build bounded literal, normalized, and initials query variants.
 
     The literal query is always first. A changed ASCII case/width/dash form is
     retained as a normalized base key. Normalized lowercase ASCII alphabetic
-    input longer than one byte then contributes initials and pinyin variants,
-    in that order, under the generated-byte budget. Duplicate ``(kind, text)``
-    pairs are removed.
+    input longer than one byte then contributes an initials variant under the
+    generated-byte budget. A same-text pinyin variant is coverage-redundant:
+    the literal or normalized kind already covers full and joined pinyin.
     """
-    if max_count < 0 or max_count > 4:
+    if max_count < 0 or max_count > 3:
         raise Error(
-            "max_count must be within [0, 4] for Chinese query keys; got "
+            "max_count must be within [0, 3] for Chinese query keys; got "
             + String(max_count)
         )
     if max_total_key_bytes < 0:
@@ -680,14 +709,6 @@ def chinese_query_keys(
     _append_query_key(
         output,
         SearchKeyKind.QUERY_INITIALS,
-        normalized,
-        max_count,
-        max_total_key_bytes,
-        generated_bytes,
-    )
-    _append_query_key(
-        output,
-        SearchKeyKind.QUERY_CHINESE_PINYIN,
         normalized,
         max_count,
         max_total_key_bytes,

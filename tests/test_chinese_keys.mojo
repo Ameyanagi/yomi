@@ -11,9 +11,9 @@ from yomi import (
 
 
 def test_candidate_keys_are_typed_and_differentially_match_pinyin_order() raises:
-    var expected = pinyin_representations("还没")
+    var expected = pinyin_representations("还没", 7)
     var bundle = chinese_candidate_keys("还没")
-    assert_equal(bundle.count(), 9)
+    assert_equal(bundle.count(), 8)
     assert_true(bundle.key(0).kind() == SearchKeyKind.ORIGINAL)
     assert_equal(bundle.key(0).text(), "还没")
     for index in range(len(expected)):
@@ -27,7 +27,7 @@ def test_candidate_keys_are_typed_and_differentially_match_pinyin_order() raises
 
 
 def test_candidate_deduplication_uses_kind_and_text_together() raises:
-    var bundle = chinese_candidate_keys("中", 9, 1024, ChinesePolyphoneMode.NONE)
+    var bundle = chinese_candidate_keys("中", 8, 1024, ChinesePolyphoneMode.NONE)
     assert_equal(bundle.count(), 4)
     assert_equal(bundle.key(1).text(), "zhong")
     assert_equal(bundle.key(2).text(), "zhong")
@@ -43,29 +43,29 @@ def test_candidate_caps_and_budget_are_enforced_before_growth() raises:
     assert_equal(capped.key(2).text(), "beijingdaxue")
     assert_equal(capped.key(3).text(), "bjdx")
 
-    var initials_only = chinese_candidate_keys("北京大学", 9, 4)
+    var initials_only = chinese_candidate_keys("北京大学", 8, 4)
     assert_equal(initials_only.count(), 2)
     assert_true(initials_only.key(1).kind() == SearchKeyKind.CHINESE_PINYIN_INITIALS)
     assert_equal(initials_only.key(1).text(), "bjdx")
 
-    var full_only = chinese_candidate_keys("北京大学", 9, 15)
+    var full_only = chinese_candidate_keys("北京大学", 8, 15)
     assert_equal(full_only.count(), 2)
     assert_equal(full_only.key(1).text(), "bei jing da xue")
 
     var long_source = String()
     for _ in range(1024):
         long_source += "中"
-    var rejected_growth = chinese_candidate_keys(long_source, 9, 64)
+    var rejected_growth = chinese_candidate_keys(long_source, 8, 64)
     assert_equal(rejected_growth.count(), 1)
     assert_equal(rejected_growth.key(0).text(), long_source)
 
     assert_equal(chinese_candidate_keys("北京", 0).count(), 0)
     assert_equal(chinese_candidate_keys("北京", 1).count(), 1)
-    assert_equal(chinese_candidate_keys("北京", 9, 0).count(), 1)
-    with assert_raises(contains="within [0, 9]"):
-        _ = chinese_candidate_keys("北京", 10)
+    assert_equal(chinese_candidate_keys("北京", 8, 0).count(), 1)
+    with assert_raises(contains="within [0, 8]"):
+        _ = chinese_candidate_keys("北京", 9)
     with assert_raises(contains="must be nonnegative"):
-        _ = chinese_candidate_keys("北京", 9, -1)
+        _ = chinese_candidate_keys("北京", 8, -1)
 
 
 def test_polyphones_are_single_character_common_substitutions() raises:
@@ -74,9 +74,8 @@ def test_polyphones_are_single_character_common_substitutions() raises:
     assert_equal(common.key(5).text(), "huanmei")
     assert_equal(common.key(6).text(), "hai mo")
     assert_equal(common.key(7).text(), "haimo")
-    assert_equal(common.key(8).text(), "fu mei")
 
-    var none = chinese_candidate_keys("还没", 9, 1024, ChinesePolyphoneMode.NONE)
+    var none = chinese_candidate_keys("还没", 8, 1024, ChinesePolyphoneMode.NONE)
     assert_equal(none.count(), 4)
     assert_equal(none.key(1).text(), "hai mei")
     assert_equal(none.key(2).text(), "haimei")
@@ -107,13 +106,12 @@ def test_candidate_mappings_remain_exact_for_gaps_and_alternates() raises:
 
 def test_query_keys_match_yuru_order_and_preserve_fullwidth_sources() raises:
     var bundle = chinese_query_keys("ＢＪＤＸ")
-    assert_equal(bundle.count(), 4)
+    assert_equal(bundle.count(), 3)
     assert_true(bundle.key(0).kind() == SearchKeyKind.QUERY_ORIGINAL)
     assert_equal(bundle.key(0).text(), "ＢＪＤＸ")
     assert_true(bundle.key(1).kind() == SearchKeyKind.QUERY_NORMALIZED)
     assert_true(bundle.key(2).kind() == SearchKeyKind.QUERY_INITIALS)
-    assert_true(bundle.key(3).kind() == SearchKeyKind.QUERY_CHINESE_PINYIN)
-    for index in range(1, 4):
+    for index in range(1, 3):
         assert_equal(bundle.key(index).text(), "bjdx")
 
     var normalized = bundle.key(2).representation()
@@ -128,19 +126,38 @@ def test_query_keys_match_yuru_order_and_preserve_fullwidth_sources() raises:
 def test_query_count_and_byte_budgets_are_deterministic() raises:
     var literal = chinese_query_keys("bjdx", 1)
     assert_equal(literal.count(), 1)
-    var initials = chinese_query_keys("bjdx", 4, 4)
+    var initials = chinese_query_keys("bjdx", 3, 4)
     assert_equal(initials.count(), 2)
     assert_true(initials.key(1).kind() == SearchKeyKind.QUERY_INITIALS)
-    var no_generated = chinese_query_keys("ＢＪＤＸ", 4, 0)
+    # QUERY_ORIGINAL already covers full/joined pinyin for unchanged text, so
+    # only QUERY_INITIALS adds coverage for this normalized query.
+    assert_equal(chinese_query_keys("bjdx").count(), 2)
+    var no_generated = chinese_query_keys("ＢＪＤＸ", 3, 0)
     assert_equal(no_generated.count(), 2)
     assert_true(no_generated.key(1).kind() == SearchKeyKind.QUERY_NORMALIZED)
     assert_equal(chinese_query_keys("a").count(), 1)
     assert_equal(chinese_query_keys("abc-123").count(), 1)
     assert_equal(chinese_query_keys("abc", 0).count(), 0)
-    with assert_raises(contains="within [0, 4]"):
-        _ = chinese_query_keys("abc", 5)
+    with assert_raises(contains="within [0, 3]"):
+        _ = chinese_query_keys("abc", 4)
     with assert_raises(contains="must be nonnegative"):
-        _ = chinese_query_keys("abc", 4, -1)
+        _ = chinese_query_keys("abc", 3, -1)
+
+
+def test_polyphone_mode_is_total_and_validated_before_empty_caps() raises:
+    assert_equal(String(ChinesePolyphoneMode.NONE), "NONE")
+    assert_equal(String(ChinesePolyphoneMode.COMMON), "COMMON")
+    var invalid = ChinesePolyphoneMode.COMMON
+    invalid._value = 2
+    assert_equal(String(invalid), "INVALID(_value=2)")
+    with assert_raises(
+        contains=(
+            "ChinesePolyphoneMode _value must be 0 (NONE) or 1 (COMMON); got _value=2"
+        )
+    ):
+        _ = pinyin_representations("还没", 0, invalid)
+    with assert_raises(contains="got _value=2"):
+        _ = chinese_candidate_keys("还没", 0, 0, invalid)
 
 
 def test_moving_accessors_transfer_owned_storage() raises:
