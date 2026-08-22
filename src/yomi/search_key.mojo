@@ -173,6 +173,10 @@ struct SearchKey(Copyable):
         """Return a detached source-preserving representation."""
         return self._representation.copy()
 
+    def take_representation(deinit self) -> PhoneticRepresentation:
+        """Consume this key and return its owned representation without copying."""
+        return self._representation^
+
 
 struct SearchKeyBundle(Copyable):
     """A validated owned key list with an explicit construction cap."""
@@ -223,3 +227,7 @@ struct SearchKeyBundle(Copyable):
     def snapshot(self) -> List[SearchKey]:
         """Return a detached copy of all keys."""
         return self._keys.copy()
+
+    def take_keys(deinit self) -> List[SearchKey]:
+        """Consume this bundle and return its owned key storage without copying."""
+        return self._keys^

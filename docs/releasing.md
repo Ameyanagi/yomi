@@ -11,8 +11,10 @@
    lightweight tags, commits outside
    `origin/main`, tag/version mismatches, missing dated changelog entries, and
    compiler pin drift.
-5. Replace the local `source.path` in the modular-community recipe submission
-   with the repository URL and full 40-character tag commit SHA.
+5. Dispatch the central `Ameyanagi/mojo-channel` build for repository `yomi`,
+   the immutable tag ref, and publishing enabled. That workflow rebuilds each
+   supported native subdir, validates exact name/version/compiler metadata,
+   and refuses to replace a different existing artifact.
 6. Reset the Conda build number to zero for a new version; increment it only
    when rebuilding the same source version.
 7. Verify the tag workflow's package gate builds and tests the installed package
@@ -23,4 +25,5 @@ The tag workflow creates a source archive only after both the normal check
 matrix and a full Rattler package/install/smoke matrix pass. The smoke test must
 exercise public transformed/source text, mapping endpoints, exact source-range
 projection, and NFC/NFD choseong equivalence—not merely import the package.
-Publishing to modular-community remains a separate reviewed operation.
+Publishing the three platform packages remains a separate, serialized,
+reviewed channel operation after the source release succeeds.

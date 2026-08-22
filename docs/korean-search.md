@@ -11,16 +11,17 @@ Yomi exposes four explicit modern-Hangul finder transformations:
 
 For ordinary candidate indexing, `korean_candidate_keys(source)` is the small
 front door over those slices. It returns typed `SearchKey` values in this
-stable order:
+stable order, with duplicate `(kind, text)` pairs removed:
 
 | Kind | `서울` key |
 | --- | --- |
 | `ORIGINAL` | `서울` |
 | `KOREAN_ROMANIZED` | `seoul` |
+| `KOREAN_ROMANIZED` | `seo ul` |
 | `KOREAN_INITIALS` | `ㅅㅇ` |
 | `KOREAN_KEYBOARD` | `tjdnf` |
 
-`max_count` is constrained to `[0, 4]`. `max_total_key_bytes` bounds the three
+`max_count` is constrained to `[0, 5]`. `max_total_key_bytes` bounds the four
 generated keys together while leaving the original key available, so a caller
 can put a hard ceiling on indexing expansion without learning representation
 details. Generation stops as soon as the count cap is full; a zero generated

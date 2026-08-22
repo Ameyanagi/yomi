@@ -1,5 +1,25 @@
 # Chinese search keys
 
+`chinese_candidate_keys(source)` is the normal indexing front door. It returns
+a typed `SearchKeyBundle` in stable order: required `ORIGINAL`, then
+`CHINESE_PINYIN_FULL`, `CHINESE_PINYIN_JOINED`, and
+`CHINESE_PINYIN_INITIALS` for each reading sequence. Duplicate `(kind, text)`
+pairs are removed, so a one-character full and joined spelling remain distinct
+typed keys while repeated initials do not. `max_count` is constrained to
+`[0, 9]`; `max_total_key_bytes` bounds generated key text while leaving the
+original available.
+
+`chinese_query_keys(source)` returns at most four query variants: literal
+`QUERY_ORIGINAL`, a changed case/width/dash-folded `QUERY_NORMALIZED`, then
+`QUERY_INITIALS` and `QUERY_CHINESE_PINYIN` for normalized lowercase ASCII
+alphabetic queries longer than one byte. The two language variants intentionally
+retain the same text under different kinds because they cover different
+candidate key kinds. Their generated text shares a 1,024-byte default budget.
+
+Both front doors enforce their caps while generating values, before matching.
+`take_keys()` and `take_representation()` transfer their owned storage to a
+consumer without constructing detached copies.
+
 Yomi exposes three explicit primary-reading transformations:
 
 - `pinyin_full(source)` emits space-separated syllables;
@@ -20,7 +40,7 @@ the owned source text.
 
 ## Common polyphones
 
-`pinyin_representations(source, max_count=8)` returns a capped flat list of
+The lower-level `pinyin_representations(source, max_count=8)` returns a capped flat list of
 search representations. It first emits primary full, joined, and initials
 forms. In `ChinesePolyphoneMode.COMMON`, it then substitutes one character at a
 time, ordered by alternate-reading index and source position, and emits that

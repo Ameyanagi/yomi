@@ -4,9 +4,9 @@ from std.benchmark import keep
 from std.collections import List
 from std.time import perf_counter_ns
 from yomi import (
+    chinese_candidate_keys,
     japanese_candidate_keys,
     korean_candidate_keys,
-    pinyin_representations,
 )
 
 
@@ -65,16 +65,16 @@ def _chinese() raises:
     var final_checksum = 0
     for _ in range(3):
         for _ in range(_CANDIDATES):
-            keep(len(pinyin_representations("重庆银行大学")))
+            keep(chinese_candidate_keys("重庆银行大学").count())
     for _ in range(_SAMPLES):
         var checksum = 0
         var started = perf_counter_ns()
         for _ in range(_CANDIDATES):
-            checksum += len(pinyin_representations("重庆银行大学"))
+            checksum += chinese_candidate_keys("重庆银行大学").count()
         timings.append(perf_counter_ns() - started)
         final_checksum = checksum
         keep(checksum)
-    _report("chinese_pinyin_representations", timings^, final_checksum)
+    _report("chinese_candidate_keys", timings^, final_checksum)
 
 
 def _korean() raises:
@@ -101,12 +101,14 @@ def _limited_bundles() raises:
         for _ in range(_CANDIDATES):
             keep(japanese_candidate_keys("東2025年", 2, 0).count())
             keep(korean_candidate_keys("서울특별시", 1, 0).count())
+            keep(chinese_candidate_keys("重庆银行大学", 1, 0).count())
     for _ in range(_SAMPLES):
         var checksum = 0
         var started = perf_counter_ns()
         for _ in range(_CANDIDATES):
             checksum += japanese_candidate_keys("東2025年", 2, 0).count()
             checksum += korean_candidate_keys("서울특별시", 1, 0).count()
+            checksum += chinese_candidate_keys("重庆银行大学", 1, 0).count()
         timings.append(perf_counter_ns() - started)
         final_checksum = checksum
         keep(checksum)

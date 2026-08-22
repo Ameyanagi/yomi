@@ -76,9 +76,10 @@ def main() raises:
 ## Korean public slices
 
 Use `korean_candidate_keys` when a finder wants the normal Korean indexing
-bundle. It returns at most four typed keys in stable order: original text,
-joined romanization, choseong initials, and Dubeolsik keyboard input. Generated
-keys share one byte budget; the original key does not consume that budget:
+bundle. It returns at most five typed keys in stable order: original text,
+joined romanization, spaced romanization, choseong initials, and Dubeolsik
+keyboard input. Generated keys share one byte budget; the original key does not
+consume that budget:
 
 ```mojo
 from yomi import korean_candidate_keys
@@ -87,7 +88,7 @@ from yomi import korean_candidate_keys
 def main() raises:
     var keys = korean_candidate_keys("서울")
     for index in range(keys.count()):
-        print(keys.key(index).text())  # 서울, seoul, ㅅㅇ, tjdnf
+        print(keys.key(index).text())  # 서울, seoul, seo ul, ㅅㅇ, tjdnf
 ```
 
 The four individual transformations remain available when a caller needs one
@@ -191,7 +192,27 @@ def main() raises:
 
 ## Chinese public slices
 
-The primary-reading front door is three explicit source-preserving functions:
+Use the two typed front doors for candidate indexing and query expansion. The
+candidate bundle retains the original, then full, joined, and initials pinyin
+under a nine-key/1,024-generated-byte default. The query bundle retains the
+literal query, a changed normalized base form, and typed initials/pinyin views:
+
+```mojo
+from yomi import chinese_candidate_keys, chinese_query_keys
+
+
+def main() raises:
+    var keys = chinese_candidate_keys("北京大学")
+    for index in range(keys.count()):
+        print(keys.key(index).text())  # 北京大学, bei jing da xue, ... bjdx
+
+    var queries = chinese_query_keys("ＢＪＤＸ")
+    for index in range(queries.count()):
+        print(queries.key(index).text())  # ＢＪＤＸ, bjdx, bjdx, bjdx
+```
+
+The three individual primary-reading functions remain available when a caller
+needs exactly one representation:
 
 ```mojo
 from yomi import pinyin_full, pinyin_initials, pinyin_joined
@@ -319,7 +340,9 @@ non-raising except where an operation validates new input, such as a mapping
 index or output match range. Mojo 1.0 does not enforce field privacy, so direct
 mutation of underscore-prefixed storage is out of contract; `validate()`
 provides an explicit checkpoint for unusual low-level work.
-`mapping_snapshot()` returns a detached list for efficient enumeration.
+`mapping_snapshot()` returns a detached list for efficient enumeration. Typed
+pipelines can instead consume `SearchKeyBundle.take_keys()` and
+`SearchKey.take_representation()` to transfer owned storage without detaching.
 `source_ranges_for_output()` projects a match to ordered exact source ranges,
 ignoring unmapped separators, merging only overlapping or touching ranges, and
 never bridging a source gap.

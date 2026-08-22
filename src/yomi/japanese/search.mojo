@@ -1794,11 +1794,12 @@ def japanese_candidate_keys(
     # mirrors Yuru's index policy and keeps phonetic keys available for long
     # original labels when their own generated representation still fits.
     var generated_bytes = 0
-    var generated = japanese_search_keys(source, min(6, max_count - 2)).snapshot()
-    for index in range(len(generated)):
+    var generated_bundle = japanese_search_keys(source, min(6, max_count - 2))
+    var generated = generated_bundle^.take_keys()
+    while len(generated) > 0:
         if len(output) >= max_count:
             break
-        var key = generated[index].copy()
+        var key = generated.pop(0)
         var duplicate = False
         for existing_index in range(len(output)):
             if output[existing_index].kind() == key.kind() and output[
@@ -1827,8 +1828,10 @@ def japanese_search_representations(
     Kanji dictionary readings are intentionally provider-gated; see the
     Japanese search documentation for the provider contract.
     """
-    var keys = japanese_search_keys(source).snapshot()
+    var bundle = japanese_search_keys(source)
+    var keys = bundle^.take_keys()
     var output = List[PhoneticRepresentation](capacity=len(keys))
-    for index in range(len(keys)):
-        output.append(keys[index].representation())
+    while len(keys) > 0:
+        var key = keys.pop(0)
+        output.append(key^.take_representation())
     return output^
