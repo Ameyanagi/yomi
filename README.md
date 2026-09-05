@@ -391,8 +391,9 @@ Licensed under either Apache-2.0 or MIT, at your option.
 
 ## Optional Kanji readings
 
-The provider is an **unreleased API available in the current source checkout**,
-not the published 0.1.1 package. Follow the source commands in its documentation.
+The provider requires **Yomi 0.1.2 or the current source checkout**; Yomi 0.1.1
+does not include it. Until 0.1.2 packages are available, follow the source checkout
+commands in its documentation.
 
 For Kanji-only names and labels, the opt-in
 [`IpadicReadingProvider`](docs/ipadic-provider.md) loads a full checksum-verified
