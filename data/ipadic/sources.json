@@ -1,0 +1,173 @@
+{
+  "repository": "taku910/mecab",
+  "commit": "61b90ba6e669dc2d7d533d4a80d206f3b31d52b1",
+  "files": [
+    {
+      "name": "Adj.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Adj.csv",
+      "size": 2644701,
+      "sha256": "5a654779dd6e5eb8e4c1309779bc4b344298a6418c982a357cf49ea7ae425f36"
+    },
+    {
+      "name": "Adnominal.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Adnominal.csv",
+      "size": 9211,
+      "sha256": "ae284933f4d4f9b1b402e595620bcf98cac65d3f82821f432782267b59d46fdc"
+    },
+    {
+      "name": "Adverb.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Adverb.csv",
+      "size": 210274,
+      "sha256": "c534ec1095e298bc681c281084bd5e398c54fcf26c97a897e9ac198333ce1f3c"
+    },
+    {
+      "name": "Auxil.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Auxil.csv",
+      "size": 13562,
+      "sha256": "076f1efe2f1981a6172dba931e10b8d2e514a2d2814dd64c74e347a62dac462a"
+    },
+    {
+      "name": "COPYING",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/COPYING",
+      "size": 3795,
+      "sha256": "fca02d9adb601d101eccdf3131119abfff2d9c825ef5c759d7a89ebbaa972099"
+    },
+    {
+      "name": "Conjunction.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Conjunction.csv",
+      "size": 10751,
+      "sha256": "cdb4a095d2d191a79f1da769bc34f42aa4b8e61113f71bc68d2205287f389556"
+    },
+    {
+      "name": "Filler.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Filler.csv",
+      "size": 968,
+      "sha256": "e034d918f3880d2c04844030bd1857c9fd9a2ce32726618dc91d618782b28970"
+    },
+    {
+      "name": "Interjection.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Interjection.csv",
+      "size": 14298,
+      "sha256": "58faea7cb83deda9f04d3a9db93082ea4afc7af8cd8f2513f9a030b415a38fa3"
+    },
+    {
+      "name": "Noun.adjv.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.adjv.csv",
+      "size": 243211,
+      "sha256": "e1be88858408754f45f4f322b15c20c4030e8f60e76af4ad98567bd374a70b4b"
+    },
+    {
+      "name": "Noun.adverbal.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.adverbal.csv",
+      "size": 52508,
+      "sha256": "34df6bed9e23839c9c0ef64271c76d9f94236426cd36e00221d7f5e41cc37c61"
+    },
+    {
+      "name": "Noun.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.csv",
+      "size": 3966125,
+      "sha256": "2b3079bc7e30bbd0072d30b0ca859477cc9ca63ab2306f153491ffb97ea13c6e"
+    },
+    {
+      "name": "Noun.demonst.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.demonst.csv",
+      "size": 7633,
+      "sha256": "eb4743b16020cf9af4c55e97e29e8aac1e504dc8ab1a0b207bea763022c2f615"
+    },
+    {
+      "name": "Noun.nai.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.nai.csv",
+      "size": 3078,
+      "sha256": "36c90a2cc394fdce0bbc8c744630136561bd91473d32258a627f0acb9c70be3e"
+    },
+    {
+      "name": "Noun.name.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.name.csv",
+      "size": 2379384,
+      "sha256": "792040c47410b60235af15ba84eb2771f035434e18bd3e22e84fa0968fbf2084"
+    },
+    {
+      "name": "Noun.number.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.number.csv",
+      "size": 1984,
+      "sha256": "5004ee2fd5f5fecaee7b8b4c541ba08b7cb94ae2f5db1008b51a11a940ee4347"
+    },
+    {
+      "name": "Noun.org.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.org.csv",
+      "size": 1731974,
+      "sha256": "1225cb1b02b374885ba12b3f2023dc1fb65c63bd0a249a9833b24fdda8d29cc5"
+    },
+    {
+      "name": "Noun.others.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.others.csv",
+      "size": 9115,
+      "sha256": "07d6dcd1084dafab81fb4d81dda33e938f2a973f0d744f6a55979aa9a437fc90"
+    },
+    {
+      "name": "Noun.place.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.place.csv",
+      "size": 5946437,
+      "sha256": "42f2dcd0c4aff0a3499ebe78a52b7d40bf5199d377c3bf9e8168838e61985db1"
+    },
+    {
+      "name": "Noun.proper.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.proper.csv",
+      "size": 2186802,
+      "sha256": "ef2c9f64fbc13988f2ade0eb626c9acb539da833b74a23fef473e4146c49cea3"
+    },
+    {
+      "name": "Noun.verbal.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Noun.verbal.csv",
+      "size": 819625,
+      "sha256": "8cef570bf12a83b8adf569d55921cfd3fa27c769b4e3ed7a3c52d60af28cc2d0"
+    },
+    {
+      "name": "Others.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Others.csv",
+      "size": 82,
+      "sha256": "8e7cfcee3c441c13c1b615af4a02a505b1c14e7a77da1f02cedc25ed83378bff"
+    },
+    {
+      "name": "Postp-col.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Postp-col.csv",
+      "size": 7025,
+      "sha256": "475a194354489fe94006265f6c6eb33518d87699a0cefd8b7c6ca2cf6e121d12"
+    },
+    {
+      "name": "Postp.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Postp.csv",
+      "size": 7726,
+      "sha256": "09d6c1873321edd52421735302eb800f66ae2d5e5bbcb24d7d88fe4a4ffbbf2e"
+    },
+    {
+      "name": "Prefix.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Prefix.csv",
+      "size": 11947,
+      "sha256": "137f976c93d6de387c283a1d587df9ee4f406e36e39322c2024866af52823168"
+    },
+    {
+      "name": "Suffix.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Suffix.csv",
+      "size": 81516,
+      "sha256": "abf4adea49c49e9007c85b9b06fa18c4b030e1c3adf235463acc58ac34e980b5"
+    },
+    {
+      "name": "Symbol.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Symbol.csv",
+      "size": 10049,
+      "sha256": "193a138437edf447f499506e9edcdfd189663ce11253b4312608d7d366922ca2"
+    },
+    {
+      "name": "Verb.csv",
+      "url": "https://raw.githubusercontent.com/taku910/mecab/61b90ba6e669dc2d7d533d4a80d206f3b31d52b1/mecab-ipadic/Verb.csv",
+      "size": 10797561,
+      "sha256": "c61a0174fa0081eff979eda28fc74ba4ff3563b723f435d77ea2b378bc1e494f"
+    }
+  ],
+  "version": "2.7.0-20070801",
+  "artifact_sha256": "66e899d9e3176e267b4e4f7e5edfb63fb45f19f1f8af3f02a1adcbb253491d47",
+  "source_rows": 392126,
+  "surfaces": 325871,
+  "readings": 341842
+}

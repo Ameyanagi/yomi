@@ -83,3 +83,15 @@ exact source-mapping contracts.
 
 Fuzzy scoring, terminal UI, filesystem traversal, and built-in full Japanese
 morphology are outside the initial package.
+
+
+## Optional dictionaries
+
+A dictionary provider is an explicit loaded resource, separate from built-in
+key generation. `IpadicReadingProvider` validates its bounded external data at
+construction and trusts private-by-convention storage afterward; `validate()`
+is an explicit checkpoint, while new source text and budget arguments are
+validated at the call boundary. It returns existing mapped key values and owns
+no fuzzy matcher. The provider is movable to avoid accidental full-dictionary
+copies. Its lexical longest-match policy and bounded alternatives are detailed
+in [the provider contract](ipadic-provider.md).
