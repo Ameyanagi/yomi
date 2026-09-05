@@ -5,6 +5,12 @@ and uses semantic versioning for public releases.
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep Japanese query whitespace trimming on valid UTF-8 boundaries, including
+  native kana, other multibyte text, and trailing ASCII spaces or tabs. Existing
+  normalization, key ordering, and exact source mappings are preserved.
+
 ## [0.1.1] - 2026-08-22
 
 ### Added

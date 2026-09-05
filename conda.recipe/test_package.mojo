@@ -98,6 +98,10 @@ def main() raises:
     var japanese_query_variants = japanese_query_keys("kanya")
     assert_equal(japanese_query_variants.count(), 3)
     assert_equal(japanese_query_variants.key(0).weight(), 500)
+    for native_query in ["カ", "카", "é", "😀", " \tカ\t "]:
+        var native_variants = japanese_query_keys(native_query)
+        native_variants.validate()
+        assert_equal(native_variants.key(0).text(), native_query)
     assert_equal(SearchKeyKind.LEARNED_ALIAS.default_weight(), 2500)
     var japanese_keys = japanese_search_representations("8月")
     assert_equal(japanese_keys[2].text(), "hachigatsu")

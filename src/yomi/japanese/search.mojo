@@ -977,11 +977,14 @@ def _trim_ascii_query(
     normalized: PhoneticRepresentation,
 ) raises -> PhoneticRepresentation:
     var text = normalized.text()
+    var bytes = text.as_bytes()
     var start = 0
     var end = text.byte_length()
-    while start < end and _is_ascii_query_space(ord(text[byte=start])):
+    # Only ASCII bytes can be whitespace here. Inspect bytes without decoding
+    # a scalar at end - 1, which can be a UTF-8 continuation byte.
+    while start < end and _is_ascii_query_space(Int(bytes[start])):
         start += 1
-    while end > start and _is_ascii_query_space(ord(text[byte=end - 1])):
+    while end > start and _is_ascii_query_space(Int(bytes[end - 1])):
         end -= 1
     if start == 0 and end == text.byte_length():
         return normalized.copy()
