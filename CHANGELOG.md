@@ -5,6 +5,17 @@ and uses semantic versioning for public releases.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-05
+
+### Added
+
+- Add the optional `yomi.japanese.ipadic.IpadicReadingProvider` backed by the
+  complete pinned IPADIC dictionary, with deterministic bounded reading
+  alternatives, exact UTF-8 source mappings, and explicit unknown-word behavior.
+- Provide an opt-in source installer that verifies sizes, checksums and license
+  notices. Full dictionary data stays outside default package installation.
+- Document and test the provider's integration with Yuragi search/highlighting.
+
 ### Fixed
 
 - Keep Japanese query whitespace trimming on valid UTF-8 boundaries, including
@@ -93,6 +104,7 @@ and uses semantic versioning for public releases.
 - Gate source releases on full installed-package verification across the
   supported platform matrix.
 
-[Unreleased]: https://github.com/Ameyanagi/yomi/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Ameyanagi/yomi/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Ameyanagi/yomi/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Ameyanagi/yomi/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Ameyanagi/yomi/releases/tag/v0.1.0

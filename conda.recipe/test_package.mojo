@@ -1,4 +1,4 @@
-from std.testing import assert_equal
+from std.testing import assert_equal, assert_raises
 
 from yomi import (
     SearchKeyKind,
@@ -24,9 +24,14 @@ from yomi import (
     romanize_hangul_spaced,
     to_romaji,
 )
+from yomi.japanese.ipadic import IpadicReadingProvider
 
 
 def main() raises:
+    # The optional provider ships as an importable API without dictionary data.
+    with assert_raises():
+        _ = IpadicReadingProvider("__yomi_package_missing_ipadic_dictionary.tsv")
+
     var representation = hangul_choseong("한국")
     assert_equal(representation.source_text(), "한국")
     assert_equal(representation.text(), "ㅎㄱ")
