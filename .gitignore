@@ -16,3 +16,6 @@ output/
 /.claude/
 /.codex/
 /skills-lock.json
+
+# Python installer test imports
+__pycache__/
