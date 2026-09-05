@@ -387,3 +387,17 @@ a new dependency or feature.
 ## License
 
 Licensed under either Apache-2.0 or MIT, at your option.
+
+
+## Optional Kanji readings
+
+The provider is an **unreleased API available in the current source checkout**,
+not the published 0.1.1 package. Follow the source commands in its documentation.
+
+For Kanji-only names and labels, the opt-in
+[`IpadicReadingProvider`](docs/ipadic-provider.md) loads a full checksum-verified
+IPADIC-derived dictionary. It preserves bounded reading alternatives and exact
+source highlights through the existing `SearchKeyBundle` contract. Installation
+is explicit; normal Yomi installs and built-in Japanese functions stay
+dictionary-free. The provider documentation includes source/license notices,
+unknown-word and segmentation semantics, and a Yuragi integration example.

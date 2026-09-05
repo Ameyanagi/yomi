@@ -140,3 +140,15 @@ Every future generated artifact must record:
 
 Generation tools are development dependencies. Consumers install the generated
 Mojo data and do not require Python, Rust, C, or another runtime.
+
+
+## Optional IPADIC dictionary
+
+The optional external Japanese reading provider uses every reading-bearing row
+of IPADIC 2.7.0-20070801 at exact MeCab commit
+`61b90ba6e669dc2d7d533d4a80d206f3b31d52b1`. The complete per-source checksums and
+generated artifact hash are in `data/ipadic/sources.json`. NAIST/ICOT notices
+remain byte-for-byte in `LICENSES/ipadic-COPYING` and accompany every optional
+installation. The dictionary is not part of Yomi's default package or a
+generated Mojo source module. See [IPADIC provenance and semantics](ipadic-provider.md)
+for exact counts, limits, opt-in installation, and licensed fixture provenance.

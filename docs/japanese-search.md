@@ -130,23 +130,17 @@ Yomi does not silently choose `つき` or `がつ` without numeric context.
 
 ## Optional Kanji-reading provider seam
 
-Kanji dictionary readings are deliberately not embedded. Yuru obtains them
-from Lindera with IPADIC, but Yomi currently has no reviewed Mojo-native
-tokenizer/dictionary dependency or accepted generated artifact with pinned
-license, version, checksums, token boundaries, unknown-word behavior, and
-alternate-reading policy. A hand-written partial dictionary would create
-silent, data-dependent search gaps and is not an acceptable substitute.
+The built-in functions remain dictionary-free. The optional pure-Mojo
+`yomi.japanese.ipadic.IpadicReadingProvider` now implements this seam using a
+full, explicitly installed IPADIC-derived dictionary. It returns the existing
+`SearchKeyBundle`, preserves alternate readings under count/byte budgets, and
+projects every generated kana/romaji span to its exact original UTF-8 token.
 
-The provider seam is the owned list returned by
-`japanese_search_representations`, or the detached snapshot from
-`japanese_search_keys`: an application may append capped provider-produced
-values after the built-in keys. Typed values use `JAPANESE_KANA` or
-`JAPANESE_ROMAJI` as appropriate.
-Every provider value must own the identical source text, map every emitted
-reading span to exact UTF-8 source bytes, expose alternatives rather than
-silently choosing one, and document its cap and unknown-word policy. Once one
-licensed provider meets those requirements, Yomi can standardize a typed
-provider adapter without changing the built-in key functions.
+See [the IPADIC provider](ipadic-provider.md) for pinned source/license/checksums,
+installation, deterministic longest-match segmentation, unknown-word policy,
+ambiguity limits, and a downstream Yuragi integration example. No dictionary
+is included in the default install, and provider lookup does not add fuzzy
+scoring or contextual morphological disambiguation.
 
 ## Performance boundary
 

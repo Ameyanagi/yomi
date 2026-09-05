@@ -17,7 +17,7 @@ while IFS= read -r -d '' source_file; do
   cp "$source_file" "$formatted_file"
   source_files+=("$source_file")
   formatted_files+=("$formatted_file")
-done < <(find src tests examples conda.recipe -type f -name '*.mojo' -print0)
+done < <(find src tests examples integrations conda.recipe -type f -name '*.mojo' -print0)
 
 mojo format --quiet -l 88 "${formatted_files[@]}"
 status=0
