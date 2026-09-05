@@ -1,9 +1,9 @@
 # Optional IPADIC reading provider
 
 `yomi.japanese.ipadic.IpadicReadingProvider` loads a full external IPADIC-derived
-reading dictionary. This is an **unreleased API in the current source checkout**;
-it is not available in the published Yomi 0.1.1 package. Use the source checkout
-commands below until a release includes the provider. The normal Yomi installation and built-in Japanese key
+reading dictionary. It requires **Yomi 0.1.2 or the current source checkout**;
+Yomi 0.1.1 does not include it. Until 0.1.2 packages are available, use the source
+checkout commands below. The normal Yomi installation and built-in Japanese key
 functions remain dictionary-free. This module uses pure Mojo at runtime;
 Python's standard library is needed only for explicit dictionary preparation.
 

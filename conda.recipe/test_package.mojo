@@ -1,4 +1,4 @@
-from std.testing import assert_equal
+from std.testing import assert_equal, assert_raises
 
 from yomi import (
     SearchKeyKind,
@@ -24,9 +24,14 @@ from yomi import (
     romanize_hangul_spaced,
     to_romaji,
 )
+from yomi.japanese.ipadic import IpadicReadingProvider
 
 
 def main() raises:
+    # The optional provider ships as an importable API without dictionary data.
+    with assert_raises():
+        _ = IpadicReadingProvider("__yomi_package_missing_ipadic_dictionary.tsv")
+
     var representation = hangul_choseong("한국")
     assert_equal(representation.source_text(), "한국")
     assert_equal(representation.text(), "ㅎㄱ")
@@ -98,6 +103,10 @@ def main() raises:
     var japanese_query_variants = japanese_query_keys("kanya")
     assert_equal(japanese_query_variants.count(), 3)
     assert_equal(japanese_query_variants.key(0).weight(), 500)
+    for native_query in ["カ", "카", "é", "😀", " \tカ\t "]:
+        var native_variants = japanese_query_keys(native_query)
+        native_variants.validate()
+        assert_equal(native_variants.key(0).text(), native_query)
     assert_equal(SearchKeyKind.LEARNED_ALIAS.default_weight(), 2500)
     var japanese_keys = japanese_search_representations("8月")
     assert_equal(japanese_keys[2].text(), "hachigatsu")

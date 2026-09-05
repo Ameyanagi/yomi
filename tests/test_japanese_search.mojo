@@ -147,6 +147,57 @@ def test_query_fanout_trims_ascii_edges_but_preserves_exact_source() raises:
     assert_true(found)
 
 
+def test_query_fanout_accepts_multibyte_endings_with_ascii_edges() raises:
+    for content in ["カ", "か", "카", "日本", "é", "😀", "カ\u0301", "カ👩‍💻"]:
+        for prefix in ["", " \t"]:
+            for suffix in ["", " ", "\t", " \t\r\n\v\f"]:
+                var source = String(prefix) + content + suffix
+                var variants = japanese_query_keys(source)
+                variants.validate()
+                assert_equal(variants.key(0).text(), source)
+                for index in range(variants.count()):
+                    var representation = variants.key(index).representation()
+                    assert_equal(representation.source_text(), source)
+                    representation.validate()
+
+
+def test_query_fanout_keeps_unicode_and_normalized_trim_source_ranges() raises:
+    var native = japanese_query_keys(" \tカ\u0301\t ")
+    var found_native = False
+    for index in range(native.count()):
+        var key = native.key(index)
+        if key.kind() != SearchKeyKind.QUERY_JAPANESE_KANA:
+            continue
+        assert_equal(key.text(), " \tか\u0301\t ")
+        var ranges = key.representation().source_ranges_for_output(2, 7)
+        assert_equal(len(ranges), 1)
+        assert_equal(ranges[0].start(), 2)
+        assert_equal(ranges[0].end(), 7)
+        found_native = True
+    assert_true(found_native)
+
+    var romanized = japanese_query_keys(" \tＫＡＮＹＡ\t ")
+    var found_romanized = False
+    for index in range(romanized.count()):
+        var key = romanized.key(index)
+        if key.text() != "かんや":
+            continue
+        var nasal = key.representation().source_ranges_for_output(3, 6)
+        assert_equal(len(nasal), 1)
+        assert_equal(nasal[0].start(), 8)
+        assert_equal(nasal[0].end(), 11)
+        found_romanized = True
+    assert_true(found_romanized)
+
+
+def test_query_fanout_accepts_empty_and_ascii_whitespace_only() raises:
+    for source in ["", " ", "\t", " \t\r\n\v\f "]:
+        var variants = japanese_query_keys(source)
+        variants.validate()
+        assert_equal(variants.key(0).text(), source)
+        assert_equal(japanese_query_keys(source, 0).count(), 0)
+
+
 def test_numeric_query_reading_precedes_ordinary_romaji() raises:
     var variants = japanese_query_keys("８gatsu")
     var numeric_index = -1
